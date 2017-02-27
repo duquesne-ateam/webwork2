@@ -2381,11 +2381,13 @@ sub body {
 		my $problemToShow = ( $editingSetVersion ) ?
 		    $MergedProblems{$problemID} : $UserProblems{$problemID};
 		
-		my ( $editProblemPage, $editProblemLink, $viewProblemPage,
+		my ( $editProblemPage, $DuqWorkEditProblemPage, $editProblemLink, $DuqWorkEditProblemLink, $viewProblemPage,
 		     $viewProblemLink );
 		if ( $isGatewaySet ) {
 		    $editProblemPage = $urlpath->new(type =>'instructor_problem_editor2_withset_withproblem', args => { courseID => $courseID, setID => $fullSetID, problemID => $problemID });
+			$DuqWorkEditProblemPage = $urlpath->new(type =>'instructor_problem_editor2_withset_withproblem', args => {userID => $userID, setID => $fullSetID, fileName => "test"});
 		    $editProblemLink = $self->systemLink($editProblemPage, params => { make_local_copy => 0 });
+			$DuqWorkEditProblemLink = $self->systemLink($DuqWorkEditProblemPage, params => { author => $userID, hmwkSet => $fullSetID, fileName => $problemToShow ? $problemToShow->source_file : $GlobalProblems{$problemID}->source_file });
 		    $viewProblemPage =
 			$urlpath->new(type =>'gateway_quiz',
 				      args => { courseID => $courseID,
@@ -2404,8 +2406,10 @@ sub body {
 							   sourceFilePath => $file });
 		} else {
 		    $editProblemPage = $urlpath->new(type => 'instructor_problem_editor2_withset_withproblem', args => { courseID => $courseID, setID => $fullSetID, problemID => $problemID });
+			$DuqWorkEditProblemPage = $urlpath->new(type => 'instructor_problem_editor2_withset_withproblem', args => {userID => $userID, setID => $fullSetID, problemID => $problemID });
 		    $editProblemLink = $self->systemLink($editProblemPage, params => { make_local_copy => 0 });
-		    # FIXME: should we have an "act as" type link here when editing for multiple users?		
+		    # FIXME: should we have an "act as" type link here when editing for multiple users?	
+			$DuqWorkEditProblemLink = $self->systemLink($DuqWorkEditProblemPage, params => { author => $userID, hmwkSet => $fullSetID, fileName => $problemToShow ? $problemToShow->source_file : $GlobalProblems{$problemID}->source_file });
 		    $viewProblemPage = $urlpath->new(type => 'problem_detail', args => { courseID => $courseID, setID => $setID, problemID => $problemID });
 		    $viewProblemLink = $self->systemLink($viewProblemPage, params => { effectiveUser => ($forOneUser ? $editForUser[0] : $userID)});
 		}
@@ -2451,6 +2455,11 @@ sub body {
 		
 		my $showLinks = ( ! $isGatewaySet || 
 				  ( $editingSetVersion || $problemFile !~ /^group/ ));
+		# Only display the DuqWork edit button if a json file exists for this problem		 
+		my $isDuqWorkEditable = 0;
+		if(-e "/opt/webwork/courses/".$userID."/templates/".substr($GlobalProblems{$problemID}->source_file(), 0, -3).".json"){
+			$isDuqWorkEditable = 1;
+		}
 		
 		my $gradingLink = "";
 		if ($showLinks) {
@@ -2480,8 +2489,10 @@ sub body {
 			CGI::start_table({border => 0, cellpadding => 1}) .
 			CGI::Tr({}, CGI::td({}, CGI::span({class=>"pdr_handle",id=>"pdr_handle_$problemID",'data-move-text'=>$r->maketext('Move'), 'is-jitar' => $isJitarSet}, $problemNumber).$collapseButton.
 					    CGI::input({type=>"hidden", name=>"prob_num_$problemID", id=>"prob_num_$problemID", value=>$lastProblemNumber}).
-					    CGI::input({type=>"hidden", name=>"prob_parent_id_$problemID", id=>"prob_parent_id_$problemID", value=>$parentID})) .	      
-             	        CGI::Tr({}, CGI::td({}, 
+					    CGI::input({type=>"hidden", name=>"prob_parent_id_$problemID", id=>"prob_parent_id_$problemID", value=>$parentID})) . 
+						CGI::Tr({}, CGI::td({}, $r->maketext("DuqWork Functions:") . CGI::br() . 
+					    ($showLinks && $isDuqWorkEditable ? CGI::a({class=>"psd_edit", href => $DuqWorkEditProblemLink, target=>"WW_Editor",'data-toggle'=>"tooltip", 'data-placement'=>"top",'data-original-title'=>$r->maketext("Edit Problem using DuqWork")}, $r->maketext("Edit")) : " -No state saved"))) .						
+             	        CGI::Tr({}, CGI::td({}, $r->maketext("WebWork Functions:") . CGI::br() .
 					    CGI::a({href=>"#", class=>"pdr_render", id=>"pdr_render_$problemID",'data-toggle'=>"tooltip", 'data-placement'=>"top",'data-original-title'=>$r->maketext("Render Problem")}, $r->maketext('Render')).
 					    ($showLinks ? CGI::a({class=>"psd_edit", href => $editProblemLink, target=>"WW_Editor",'data-toggle'=>"tooltip", 'data-placement'=>"top",'data-original-title'=>$r->maketext("Edit Problem")}, $r->maketext("Edit")) : "")  . 
 					    ($showLinks ? CGI::a({class=>"psd_view", href => $viewProblemLink, target=>"WW_View",'data-toggle'=>"tooltip", 'data-placement'=>"top",'data-original-title'=>$r->maketext("Open in New Window")}, $r->maketext("View")) : "") .
