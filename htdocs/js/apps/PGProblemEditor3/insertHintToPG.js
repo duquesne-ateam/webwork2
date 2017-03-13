@@ -1,7 +1,3 @@
-window.onload = function(){
-	insertHintToPG('A', 'B', 'C', 'D', 'E');
-}
-
 //find index of where to insert the hint
 function findIndex(section, textArea, indicator){
 
