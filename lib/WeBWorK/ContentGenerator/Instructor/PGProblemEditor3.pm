@@ -709,6 +709,27 @@ EOF
 			),
 		);
 
+######### print hint section
+
+		#<button onclick="uploadImage()">Upload Image</button>
+		#<button onclick="toggleHintEditor()">Add Hint</button>
+		#<div id="hintEditor"></div>
+
+		print CGI::start_form({	method => 'POST', 
+					id => 'imageForm', 
+					name => 'imageForm', 
+					value => 'Upload Image',
+					onsubmit => 'javascript: uploadImage()'});
+		print CGI::end_form;
+
+		print CGI::start_form({	method => 'POST', 
+					id => 'hintintForm', 
+					name => 'hintForm', 
+					value => 'Add Hint',
+					onsubmit => 'javascript: toggleHintEditor()'});
+		print CGI::end_form;
+
+		print div ({id => 'hintEditor', ''});
 
 	
 ######### print action forms
@@ -2155,7 +2176,8 @@ sub output_JS{
 #	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/vendor/bootstrap/js/bootstrap.js"}), CGI::end_script();
 	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/apps/AddOnLoad/addOnLoadEvent.js"}), CGI::end_script();
 	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/legacy/vendor/tabber.js"}), CGI::end_script();
-	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/apps/PGProblemEditor3/pgproblemeditor3.js"}), CGI::end_script();
+	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/apps/PGProblemEditor3/pgproblemeditor3.js"}), CGI::end_script(),
+	print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/apps/PGProblemEditor3/HintsAndGraphics/HintEditor.js"}), CGI::end_script();
 
 	if ($ce->{options}->{PGMathView}) {
 	    print CGI::start_script({type=>"text/javascript", src=>"$ce->{webworkURLs}->{MathJax}"}), CGI::end_script();
