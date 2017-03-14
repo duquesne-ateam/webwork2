@@ -31,7 +31,6 @@ var hintImgDataArr = []; // stores image meta data for hint content
  * @param objButton the html document element that called this function
 
  */
-
 function toggleHintEditor(objButton){
 
     /*
@@ -46,11 +45,10 @@ function toggleHintEditor(objButton){
 
      */
 
-
-
     var hintEditor = document.getElementById("hintEditor");
 
-    
+
+    objButton = document.getElementById("addHint");    
 
     if (hintEditor.innerHTML.replace(/\s/g, '') === ''){
 
@@ -61,12 +59,16 @@ function toggleHintEditor(objButton){
             '<textarea class="problemEditor" id="hintInput" rows="6" cols="50">',
 
             '</textarea>',
+	
+            '<div>',
 
             '<button type="button" id="saveHint">Save Hint</button>',
 
             //'<input type="submit" name="saveHint" value="Save Hint"/>',
 
-            '<button type="button" onclick="uploadImage(true)">Upload Image</button>',
+            '<button type="button" onclick="uploadImage(true)">Upload Image In Hint</button>', 
+	    
+	    '</div>',
 
             '</form>'
 
@@ -119,7 +121,6 @@ function toggleHintEditor(objButton){
 }
 
 
-
 /**
 
  * Sends content of hint to funciton that translates to PG code.
@@ -127,10 +128,10 @@ function toggleHintEditor(objButton){
  */
 
 function saveHint(){
-
     translateToPG(document.getElementById("hintInput").value, hintImgDataArr,
 
         mainImgDataArr);
+	toggleHintEditor();
 
 }
 
@@ -152,11 +153,11 @@ function saveHint(){
 
 function imageMetaData(fileName, width, height){
 
-    var this.fileName = fileName;
+    this.fileName = fileName;
 
-    var this.width = width;
+    this.width = width;
 
-    var this.height = height;
+    this.height = height;
 
 }
 
@@ -186,7 +187,7 @@ function imageMetaData(fileName, width, height){
 
 function uploadImage(hint = false){
 
-    var img = prompt("Please enter URL of externally hosted iage", "");
+    var img = prompt("Please enter URL of externally hosted image", "");
 
     var w = prompt("Enter width of image in pixels for desired display", "");
 
@@ -202,13 +203,17 @@ function uploadImage(hint = false){
 
         } else {
 
-            mainImgDataArr[mainImgDataArr.length] = imageMetaData(img, w, h);
+            mainImgDataArr[mainImgDataArr.length] = [img, w, h];//imageMetaData(img, w, h);
 
         }
 
     }
 
-    
+     translateToPG("", hintImgDataArr,
+
+        mainImgDataArr);
+	
+	
 
     // navigate to proper problem set
 
@@ -230,7 +235,6 @@ function uploadImage(hint = false){
 
 
 function translateToPG(rawInput, urlDataArr, imgDataArr){
-
 //pgToSaveA gets placed after: TEXT(beginproblem());
 
 //pgToSaveB gets placed after: BEGIN_TEXT

@@ -624,7 +624,7 @@ sub body {
 	# FIXME 
 	# Should the seed be set from some particular user instance??
 	my $rows            = 20;
-	my $columns         = 80;
+	my $columns         = 70;
 	my $mode_list       = $ce->{pg}->{displayModes};
 	my $displayMode     = $self->{displayMode};
 	my $problemSeed     = $self->{problemSeed};	
@@ -708,28 +708,6 @@ EOF
 				-rows => $rows, -cols => $columns, -override => 1,
 			),
 		);
-
-######### print hint section
-
-		#<button onclick="uploadImage()">Upload Image</button>
-		#<button onclick="toggleHintEditor()">Add Hint</button>
-		#<div id="hintEditor"></div>
-
-		print CGI::start_form({	method => 'POST', 
-					id => 'imageForm', 
-					name => 'imageForm', 
-					value => 'Upload Image',
-					onsubmit => 'javascript: uploadImage()'});
-		print CGI::end_form;
-
-		print CGI::start_form({	method => 'POST', 
-					id => 'hintintForm', 
-					name => 'hintForm', 
-					value => 'Add Hint',
-					onsubmit => 'javascript: toggleHintEditor()'});
-		print CGI::end_form;
-
-		print div ({id => 'hintEditor', ''});
 
 	
 ######### print action forms
@@ -821,6 +799,7 @@ EOF
 	
 	print  CGI::end_form();
 
+
 	print CGI::start_div({id=>"render-modal", class=>"modal hide fade"});
 	print CGI::start_div({class=>'modal-header'});
 	print '<button type="button" class="close" data-dismiss="modal" aria-hidden="true"><i class="icon-remove"></i></button>';
@@ -837,6 +816,40 @@ EOF
 	print CGI::end_div();
 
 #	print CGI::a({href=>"#render-modal", role=>"button", class=>"btn", "data-toggle"=>"modal"},"Launch demo modal");
+
+
+
+######### print hint section
+
+		#<button onclick="uploadImage()">Upload Image</button>
+		#<button onclick="toggleHintEditor()">Add Hint</button>
+		#<div id="hintEditor"></div>
+
+		print CGI::start_div({});
+		print CGI::start_form({	method => 'POST', 
+					id => 'imageForm', 
+					name => 'imageForm', 
+					value => 'Upload Image',
+					onsubmit => 'javascript: uploadImage()'});
+		print '<input type="button" value="Upload Image" onclick="uploadImage()">';
+		print CGI::end_form;
+
+		print CGI::start_form({	method => 'POST', 
+					id => 'hintintForm', 
+					name => 'hintForm', 
+					value => 'Add Hint',
+					onsubmit => 'javascript: toggleHintEditor()'});
+
+		print '<input type="button" id="addHint" onclick="toggleHintEditor()" value="Add Hint">';
+		print CGI::end_form;
+
+		print CGI::div({id => 'hintEditor'}, '');
+
+		print CGI::end_div();
+
+####end hint section####
+
+
 	
 	return "";
 
