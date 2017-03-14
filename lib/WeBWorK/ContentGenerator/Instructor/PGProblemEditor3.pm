@@ -840,7 +840,7 @@ EOF
 					value => 'Add Hint',
 					onsubmit => 'javascript: toggleHintEditor()'});
 
-		print '<input type="button" id="addHint" onclick="toggleHintEditor()" value="Add Hint">';
+		print '<input type="button" id="addHint" onclick="toggleHintEditor(this)" value="Add Hint">';
 		print CGI::end_form;
 
 		print CGI::div({id => 'hintEditor'}, '');

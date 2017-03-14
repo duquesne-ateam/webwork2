@@ -46,9 +46,7 @@ function toggleHintEditor(objButton){
      */
 
     var hintEditor = document.getElementById("hintEditor");
-
-
-    objButton = document.getElementById("addHint");    
+    
 
     if (hintEditor.innerHTML.replace(/\s/g, '') === ''){
 
@@ -66,7 +64,7 @@ function toggleHintEditor(objButton){
 
             //'<input type="submit" name="saveHint" value="Save Hint"/>',
 
-            '<button type="button" onclick="uploadImage(true)">Upload Image In Hint</button>', 
+            '<button type="button" onclick="uploadImageInHint(true)">Upload Image In Hint</button>', 
 	    
 	    '</div>',
 
@@ -80,7 +78,7 @@ function toggleHintEditor(objButton){
 
         
 
-        objButton.innerHTML = "Remove Hint";
+        //objButton.innerHTML = "Remove Hint";
 
 
 
@@ -189,9 +187,9 @@ function uploadImage(hint = false){
 
     var img = prompt("Please enter URL of externally hosted image", "");
 
-    var w = prompt("Enter width of image in pixels for desired display", "");
+    var w = prompt("Enter width of image in pixels for desired display (Default is 500)", "");
 
-    var h = prompt("Enter height of image in plixels for desired display", "");
+    var h = prompt("Enter height of image in pixels for desired display (Default is 500)", "");
 
     
 
@@ -216,6 +214,52 @@ function uploadImage(hint = false){
      translateToPG("", hintImgDataArr,
 
         mainImgDataArr);
+	
+	
+
+    // navigate to proper problem set
+
+    
+
+    // call browser function
+
+
+
+    // need to save file name, size, and location to be inserted into PG code.
+
+
+
+    // call upload function
+
+}
+
+function uploadImageInHint(hint = false){
+
+    var img = prompt("Please enter URL of externally hosted image", "");
+
+    var w = prompt("Enter width of image in pixels for desired display (Default is 500)", "");
+
+    var h = prompt("Enter height of image in pixels for desired display (Default is 500)", "");
+
+    
+
+    if (img != null && w != null && h != null) {
+
+        if (hint){
+
+            //hintImgDataArr[hintImgDataArr.length] = imageMetaData(img, w, h);
+	    hintImgDataArr[0] = img;
+	    hintImgDataArr[1] = w;
+	    hintImgDataArr[2] = h;
+        } else {
+
+            //mainImgDataArr[mainImgDataArr.length] = imageMetaData(img, w, h);
+            mainImgDataArr[0] = img;
+	    mainImgDataArr[1] = w;
+	    mainImgDataArr[2] = h;
+        }
+
+    }
 	
 	
 
@@ -273,13 +317,13 @@ var imgHeight = imgDataArr[2];
 
 var counter = 0;
 
-if( urlWidth ) {} else {var urlWidth = "1000"}
+if( urlWidth ) {} else {var urlWidth = "500"}
 
-if( urlHeight ) {} else {var urlHeight = "1000"}
+if( urlHeight ) {} else {var urlHeight = "500"}
 
-if( imgWidth ) {} else {var imgWidth = "1000"}
+if( imgWidth ) {} else {var imgWidth = "500"}
 
-if( imgHeight ) {} else {var imgHeight = "1000"}
+if( imgHeight ) {} else {var imgHeight = "500"}
 
 if( imgFileName ) {
 
@@ -313,7 +357,7 @@ var pgToSaveA = "HEADER_TEXT(<<EOF);" + "\n" +
 
     "url = \"\";" +
 
-    "var opt = \"height=20,width=300,location=no,\" +" +
+    "var opt = \"height=600,width=600,location=no,\" +" +
 
     "\"menubar=no,status=no,resizable=yes,\" +" +
 
@@ -359,7 +403,7 @@ var pgToSaveA = "HEADER_TEXT(<<EOF);" + "\n" +
 
     "url = \"\";" +
 
-    "var opt = \"height=20,width=300,location=no,\" +" +
+    "var opt = \"height=600,width=600,location=no,\" +" +
 
     "\"menubar=no,status=no,resizable=yes,\" +" +
 
@@ -415,7 +459,7 @@ var pgToSaveA = "HEADER_TEXT(<<EOF);" + "\n" +
 
     "url = \"\";" +
 
-    "var opt = \"height=20,width=300,location=no,\" +" +
+    "var opt = \"height=600,width=600,location=no,\" +" +
 
     "\"menubar=no,status=no,resizable=yes,\" +" +
 
