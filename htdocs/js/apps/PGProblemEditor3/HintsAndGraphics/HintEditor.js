@@ -62,7 +62,6 @@ function toggleHintEditor(objButton){
 
             '<button type="button" id="saveHint">Save Hint</button>',
 
-            //'<input type="submit" name="saveHint" value="Save Hint"/>',
 
             '<button type="button" onclick="uploadImageInHint(true)">Upload Image In Hint</button>', 
 	    
@@ -76,25 +75,6 @@ function toggleHintEditor(objButton){
 
         hintEditor.innerHTML = addedHTML;
 
-        
-
-        //objButton.innerHTML = "Remove Hint";
-
-
-
-        /* Probably the proper way to add event listeners. Caters to IE browsers.
-
-        if (hintSwitch.addEventListener){
-
-            hintSwitch.addEventListener("click", toggleHintEditor(), false);
-
-        } else if (hintSwitch.attachEvent) {
-
-            hintSwitch.attachEvent('onclick', toggleHintEditor());
-
-        }
-
-        */
 
         document.getElementById("saveHint")
 
@@ -112,7 +92,7 @@ function toggleHintEditor(objButton){
 
         hintInput = "";
 
-        objButton.innerHTML = "Add Hint";
+        
 
     }
 
@@ -135,29 +115,6 @@ function saveHint(){
 
 
 
-/**
-
- * Contains all meta data of an image for displaying in PG code.
-
- *
-
- * @param fileName name of the image file
-
- * @param width integer display size of image width
-
- * @param hieght integer display size of image height
-
- */
-
-function imageMetaData(fileName, width, height){
-
-    this.fileName = fileName;
-
-    this.width = width;
-
-    this.height = height;
-
-}
 
 
 
@@ -197,13 +154,11 @@ function uploadImage(hint = false){
 
         if (hint){
 
-            //hintImgDataArr[hintImgDataArr.length] = imageMetaData(img, w, h);
 	    hintImgDataArr[0] = img;
 	    hintImgDataArr[1] = w;
 	    hintImgDataArr[2] = h;
         } else {
 
-            //mainImgDataArr[mainImgDataArr.length] = imageMetaData(img, w, h);
             mainImgDataArr[0] = img;
 	    mainImgDataArr[1] = w;
 	    mainImgDataArr[2] = h;
@@ -216,21 +171,6 @@ function uploadImage(hint = false){
         mainImgDataArr);
 	
 	
-
-    // navigate to proper problem set
-
-    
-
-    // call browser function
-
-
-
-    // need to save file name, size, and location to be inserted into PG code.
-
-
-
-    // call upload function
-
 }
 
 function uploadImageInHint(hint = false){
@@ -247,13 +187,11 @@ function uploadImageInHint(hint = false){
 
         if (hint){
 
-            //hintImgDataArr[hintImgDataArr.length] = imageMetaData(img, w, h);
 	    hintImgDataArr[0] = img;
 	    hintImgDataArr[1] = w;
 	    hintImgDataArr[2] = h;
         } else {
 
-            //mainImgDataArr[mainImgDataArr.length] = imageMetaData(img, w, h);
             mainImgDataArr[0] = img;
 	    mainImgDataArr[1] = w;
 	    mainImgDataArr[2] = h;
@@ -261,264 +199,240 @@ function uploadImageInHint(hint = false){
 
     }
 	
-	
-
-    // navigate to proper problem set
-
-    
-
-    // call browser function
-
-
-
-    // need to save file name, size, and location to be inserted into PG code.
-
-
-
-    // call upload function
 
 }
 
-
-
-
+/*
+ * @author Phil Hansen
+ * @author Nick Marshman
+ */
 function translateToPG(rawInput, urlDataArr, imgDataArr){
-//pgToSaveA gets placed after: TEXT(beginproblem());
+	/*
+	* pgToSaveA gets placed after: TEXT(beginproblem());
+	* pgToSaveB gets placed after: BEGIN_TEXT
+	* pgToSaveC gets placed before: END_TEXT
+	* 
+	* Please note that WeBWorK pg problems may be using PGML, in which case...
+	* pgToSaveA still gets placed after TEXT(beginproblem());
+	* BUTT
+	* pgToSaveB/C don't get used. Instead,
+	* pgToSaveD gets placed after: BEGIN_PGML
+	* pgToSaveE gets placed before: END_PGML
+	*/
 
-//pgToSaveB gets placed after: BEGIN_TEXT
+	var urlName = urlDataArr[0];
 
-//pgToSaveC gets placed before: END_TEXT
+	var urlWidth = urlDataArr[1];
 
-//
+	var urlHeight = urlDataArr[2];
+	
+	var imgFileName = imgDataArr[0];
 
-//Please note that WeBWorK pg problems may be using PGML, in which case...
+	var imgWidth = imgDataArr[1];
 
-//pgToSaveA still gets placed after TEXT(beginproblem());
+	var imgHeight = imgDataArr[2];
 
-//BUTT
+	var counter = 0;
 
-//pgToSaveB/C don't get used. Instead,
+	if( urlWidth ) {} else {var urlWidth = "500"}
 
-//pgToSaveD gets placed after: BEGIN_PGML
+	if( urlHeight ) {} else {var urlHeight = "500"}
 
-//pgToSaveE gets placed before: END_PGML
+	if( imgWidth ) {} else {var imgWidth = "500"}
 
-var urlName = urlDataArr[0];
+	if( imgHeight ) {} else {var imgHeight = "500"}
 
-var urlWidth = urlDataArr[1];
+	if( imgFileName ) {
 
-var urlHeight = urlDataArr[2];
+		var pgToSaveB = "\\{ image( \""+imgFileName+"\", width=>"+imgWidth+", height=>"+imgHeight+", tex_size=>700, extra_html_tags=>'alt=\""+imgFileName+"\"' ) \\} $BR";
 
-var imgFileName = imgDataArr[0];
+		var pgToSaveD = "[@ image( \""+imgFileName+"\", width=>"+imgWidth+", height=>"+imgHeight+", tex_size=>700, extra_html_tags=>'alt=\""+imgFileName+"\"' ) @]*  ";
 
-var imgWidth = imgDataArr[1];
+	}
 
-var imgHeight = imgDataArr[2];
+	else{
 
-var counter = 0;
+		var pgToSaveB = "";
 
-if( urlWidth ) {} else {var urlWidth = "500"}
+		var pgToSaveD = "";
 
-if( urlHeight ) {} else {var urlHeight = "500"}
+	}
 
-if( imgWidth ) {} else {var imgWidth = "500"}
+	if( rawInput ) {var counter = counter + 1;}
 
-if( imgHeight ) {} else {var imgHeight = "500"}
+	if ( urlName ) {var counter = counter + 2;}
 
-if( imgFileName ) {
+	if( counter == 1 ) {
 
-	var pgToSaveB = "\\{ image( \""+imgFileName+"\", width=>"+imgWidth+", height=>"+imgHeight+", tex_size=>700, extra_html_tags=>'alt=\""+imgFileName+"\"' ) \\} $BR";
+	var pgToSaveA = "HEADER_TEXT(<<EOF);" + "\n" +
 
-	var pgToSaveD = "[@ image( \""+imgFileName+"\", width=>"+imgWidth+", height=>"+imgHeight+", tex_size=>700, extra_html_tags=>'alt=\""+imgFileName+"\"' ) @]*  ";
+	"<script language=\"javascript\" type=\"text/javascript\">" + "<!-- //" + "\n" +
+
+	  "var tempInput = \""+rawInput+"\";" +
+
+	  "function rawToText(words){" +
+
+	    "url = \"\";" +
+
+	    "var opt = \"height=600,width=600,location=no,\" +" +
+
+	    "\"menubar=no,status=no,resizable=yes,\" +" +
+
+	    "\"scrollbars=no,toolbar=no,\";" +
+
+	    "newwindow=window.open(url,'examdata_info',opt);" +
+
+	    "newdocument=newwindow.document;" +
+
+	    "newdocument.write(words);" +
+
+	    "newdocument.close();" +
+
+	  "}" +
+
+	  "// -->" +
+
+	  "</script>" + "\n" +
+
+	"EOF";
+
+	var pgToSaveC = "$BR" +
+
+	"\\{ htmlLink( \"javascript:rawToText(tempInput)\", \"Need help?\" ) \\}";
+
+	var pgToSaveE = "\n" + "[@ htmlLink(\"javascript:rawToText(tempInput)\",\"Need help?\") @]*";
+
+	}
+
+	if( counter == 2 ) {
+
+	var pgToSaveA = "HEADER_TEXT(<<EOF);" + "\n" +
+
+	"<script language=\"javascript\" type=\"text/javascript\">" + "<!-- //" + "\n" +
+
+	  "var tempInput = \""+urlName+"\";" +
+
+	  "var uheight = \""+urlWidth+"\";" +
+
+	  "var uwidth = \""+urlHeight+"\";" +
+
+	  "function rawToText(words, nerds, birds){" +
+
+	    "url = \"\";" +
+
+	    "var opt = \"height=600,width=600,location=no,\" +" +
+
+	    "\"menubar=no,status=no,resizable=yes,\" +" +
+
+	    "\"scrollbars=no,toolbar=no,\";" +
+
+	    "newwindow=window.open(url,'examdata_info',opt);" +
+
+	    "newdocument=newwindow.document;" +
+
+	    "var iframe = newdocument.createElement('iframe');" +
+
+	    "iframe.src = words;" +
+
+	    "iframe.height = nerds;" +
+
+	    "iframe.width = birds;" +
+
+	    "newdocument.body.appendChild(iframe);" +
+
+	    "newdocument.close();" +
+
+	  "}" +
+
+	  "// -->" +
+
+	  "</script>" + "\n" +
+
+	"EOF";
+
+	var pgToSaveC = "$BR" +
+
+	"\\{ htmlLink( \"javascript:rawToText(tempInput, uheight, uwidth)\", \"Need help?\" ) \\}";
+
+	var pgToSaveE = "\n" + "[@ htmlLink(\"javascript:rawToText(tempInput, uheight, uwidth)\",\"Need help?\") @]*";
+
+	}
+
+	if( counter == 3 ) {
+
+	var pgToSaveA = "HEADER_TEXT(<<EOF);" + "\n" +
+
+	"<script language=\"javascript\" type=\"text/javascript\">" + "<!-- //" + "\n" +
+
+	  "var tempInputA = \""+rawInput+"\";" +
+
+	  "var tempInputB = \""+urlName+"\";" +
+
+	  "var uheight = \""+urlWidth+"\";" +
+
+	  "var uwidth = \""+urlHeight+"\";" +
+
+	  "function rawToText(wordsA, wordsB, nerds, birds){" +
+
+	    "url = \"\";" +
+
+	    "var opt = \"height=600,width=600,location=no,\" +" +
+
+	    "\"menubar=no,status=no,resizable=yes,\" +" +
+
+	    "\"scrollbars=no,toolbar=no,\";" +
+
+	    "newwindow=window.open(url,'examdata_info',opt);" +
+
+	    "newdocument=newwindow.document;" +
+
+	    "newdocument.write(wordsA);" +
+
+	    "var iframe = newdocument.createElement('iframe');" +
+
+	    "iframe.src = wordsB;" +
+
+	    "iframe.height = nerds;" +
+
+	    "iframe.width = birds;" +
+
+	    "newdocument.body.appendChild(iframe);" +
+
+	    "newdocument.close();" +
+
+	  "}" +
+
+	  "// -->" +
+
+	  "</script>" + "\n" +
+
+	"EOF";
+
+	var pgToSaveC = "$BR" +
+
+	"\\{ htmlLink( \"javascript:rawToText(tempInputA, tempInputB, uheight, uwidth)\", \"Need help?\" ) \\}";
+
+	var pgToSaveE = "\n" + "[@ htmlLink(\"javascript:rawToText(tempInputA, tempInputB, uheight, uwidth)\",\"Need help?\") @]*";
+
+	}
+
+	if( counter == 0 ) {
+
+		var pgToSaveA = "";
+
+		var pgToSaveC = "";
+
+		var pgToSaveE = "";
+
+	}
+
+	insertHintToPG(pgToSaveA, pgToSaveB, pgToSaveC, pgToSaveD, pgToSaveE);
 
 }
 
-else{
-
-	var pgToSaveB = "";
-
-	var pgToSaveD = "";
-
-}
-
-if( rawInput ) {var counter = counter + 1;}
-
-if ( urlName ) {var counter = counter + 2;}
-
-if( counter == 1 ) {
-
-var pgToSaveA = "HEADER_TEXT(<<EOF);" + "\n" +
-
-"<script language=\"javascript\" type=\"text/javascript\">" + "<!-- //" + "\n" +
-
-  "var tempInput = \""+rawInput+"\";" +
-
-  "function rawToText(words){" +
-
-    "url = \"\";" +
-
-    "var opt = \"height=600,width=600,location=no,\" +" +
-
-    "\"menubar=no,status=no,resizable=yes,\" +" +
-
-    "\"scrollbars=no,toolbar=no,\";" +
-
-    "newwindow=window.open(url,'examdata_info',opt);" +
-
-    "newdocument=newwindow.document;" +
-
-    "newdocument.write(words);" +
-
-    "newdocument.close();" +
-
-  "}" +
-
-  "// -->" +
-
-  "</script>" + "\n" +
-
-"EOF";
-
-var pgToSaveC = "$BR" +
-
-"\\{ htmlLink( \"javascript:rawToText(tempInput)\", \"Need help?\" ) \\}";
-
-var pgToSaveE = "\n" + "[@ htmlLink(\"javascript:rawToText(tempInput)\",\"Need help?\") @]*";
-
-}
-
-if( counter == 2 ) {
-
-var pgToSaveA = "HEADER_TEXT(<<EOF);" + "\n" +
-
-"<script language=\"javascript\" type=\"text/javascript\">" + "<!-- //" + "\n" +
-
-  "var tempInput = \""+urlName+"\";" +
-
-  "var uheight = \""+urlWidth+"\";" +
-
-  "var uwidth = \""+urlHeight+"\";" +
-
-  "function rawToText(words, nerds, birds){" +
-
-    "url = \"\";" +
-
-    "var opt = \"height=600,width=600,location=no,\" +" +
-
-    "\"menubar=no,status=no,resizable=yes,\" +" +
-
-    "\"scrollbars=no,toolbar=no,\";" +
-
-    "newwindow=window.open(url,'examdata_info',opt);" +
-
-    "newdocument=newwindow.document;" +
-
-    "var iframe = newdocument.createElement('iframe');" +
-
-    "iframe.src = words;" +
-
-    "iframe.height = nerds;" +
-
-    "iframe.width = birds;" +
-
-    "newdocument.body.appendChild(iframe);" +
-
-    "newdocument.close();" +
-
-  "}" +
-
-  "// -->" +
-
-  "</script>" + "\n" +
-
-"EOF";
-
-var pgToSaveC = "$BR" +
-
-"\\{ htmlLink( \"javascript:rawToText(tempInput, uheight, uwidth)\", \"Need help?\" ) \\}";
-
-var pgToSaveE = "\n" + "[@ htmlLink(\"javascript:rawToText(tempInput, uheight, uwidth)\",\"Need help?\") @]*";
-
-}
-
-if( counter == 3 ) {
-
-var pgToSaveA = "HEADER_TEXT(<<EOF);" + "\n" +
-
-"<script language=\"javascript\" type=\"text/javascript\">" + "<!-- //" + "\n" +
-
-  "var tempInputA = \""+rawInput+"\";" +
-
-  "var tempInputB = \""+urlName+"\";" +
-
-  "var uheight = \""+urlWidth+"\";" +
-
-  "var uwidth = \""+urlHeight+"\";" +
-
-  "function rawToText(wordsA, wordsB, nerds, birds){" +
-
-    "url = \"\";" +
-
-    "var opt = \"height=600,width=600,location=no,\" +" +
-
-    "\"menubar=no,status=no,resizable=yes,\" +" +
-
-    "\"scrollbars=no,toolbar=no,\";" +
-
-    "newwindow=window.open(url,'examdata_info',opt);" +
-
-    "newdocument=newwindow.document;" +
-
-    "newdocument.write(wordsA);" +
-
-    "var iframe = newdocument.createElement('iframe');" +
-
-    "iframe.src = wordsB;" +
-
-    "iframe.height = nerds;" +
-
-    "iframe.width = birds;" +
-
-    "newdocument.body.appendChild(iframe);" +
-
-    "newdocument.close();" +
-
-  "}" +
-
-  "// -->" +
-
-  "</script>" + "\n" +
-
-"EOF";
-
-var pgToSaveC = "$BR" +
-
-"\\{ htmlLink( \"javascript:rawToText(tempInputA, tempInputB, uheight, uwidth)\", \"Need help?\" ) \\}";
-
-var pgToSaveE = "\n" + "[@ htmlLink(\"javascript:rawToText(tempInputA, tempInputB, uheight, uwidth)\",\"Need help?\") @]*";
-
-}
-
-if( counter == 0 ) {
-
-	var pgToSaveA = "";
-
-	var pgToSaveC = "";
-
-	var pgToSaveE = "";
-
-}
-
-insertHintToPG(pgToSaveA, pgToSaveB, pgToSaveC, pgToSaveD, pgToSaveE);
-
-}
-
-
-
-
-
-
-
+/*
+ * @author Sean McShane
+ */
 //find index of where to insert the hint
 function findIndex(section, textArea, indicator){
 

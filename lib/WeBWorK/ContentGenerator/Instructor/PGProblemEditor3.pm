@@ -818,7 +818,7 @@ EOF
 #	print CGI::a({href=>"#render-modal", role=>"button", class=>"btn", "data-toggle"=>"modal"},"Launch demo modal");
 
 
-
+# @author Dave Kelly
 ######### print hint section
 
 		#<button onclick="uploadImage()">Upload Image</button>
