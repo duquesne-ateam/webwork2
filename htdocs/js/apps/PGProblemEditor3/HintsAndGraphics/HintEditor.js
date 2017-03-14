@@ -199,12 +199,16 @@ function uploadImage(hint = false){
 
         if (hint){
 
-            hintImgDataArr[hintImgDataArr.length] = imageMetaData(img, w, h);
-
+            //hintImgDataArr[hintImgDataArr.length] = imageMetaData(img, w, h);
+	    hintImgDataArr[0] = img;
+	    hintImgDataArr[1] = w;
+	    hintImgDataArr[2] = h;
         } else {
 
-            mainImgDataArr[mainImgDataArr.length] = [img, w, h];//imageMetaData(img, w, h);
-
+            //mainImgDataArr[mainImgDataArr.length] = imageMetaData(img, w, h);
+            mainImgDataArr[0] = img;
+	    mainImgDataArr[1] = w;
+	    mainImgDataArr[2] = h;
         }
 
     }
