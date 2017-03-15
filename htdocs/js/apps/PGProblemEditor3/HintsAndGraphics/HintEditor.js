@@ -110,6 +110,8 @@ function saveHint(){
 
         mainImgDataArr);
 	toggleHintEditor();
+	hintImgDataArr = [];
+	mainImgDataArr = [];
 
 }
 
@@ -169,6 +171,9 @@ function uploadImage(hint = false){
      translateToPG("", hintImgDataArr,
 
         mainImgDataArr);
+
+	hintImgDataArr = [];
+	mainImgDataArr = [];
 	
 	
 }
