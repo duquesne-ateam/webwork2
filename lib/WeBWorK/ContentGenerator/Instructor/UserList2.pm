@@ -493,23 +493,6 @@ sub initialize {
 
 	# Check permissions
 	return unless $authz->hasPermissions($user, "access_instructor_tools");
-<<<<<<< HEAD
-
-	#if (defined($r->param('addStudent'))) {
-	#	my $newUser = $db->newUser;
-	#	my $newPermissionLevel = $db->newPermissionLevel;
-	#	my $newPassword = $db->newPassword;
-	#	$newUser->user_id($r->param('newUserID'));
-	#	$newPermissionLevel->user_id($r->param('newUserID'));
-	#	$newPassword->user_id($r->param('newUserID'));
-	#	$newUser->status('C');
-	#	$newPermissionLevel->permission(0);
-	#	$db->addUser($newUser);
-	#	$db->addPermissionLevel($newPermissionLevel);
-	#	$db->addPassword($newPassword);
-	#}
-=======
->>>>>>> 8abecbb4f968ba84bc8bfdaffdfb5c3bd19e149e
 }
 
 
