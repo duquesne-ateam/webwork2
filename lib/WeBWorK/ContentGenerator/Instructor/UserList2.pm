@@ -10,7 +10,8 @@
 # 
 # This program is distributed in the hope that it will be useful, but WITHOUT
 # ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
-# FOR A PARTICULAR PURPOSE.  See either the GNU General Public License or the # Artistic License for more details.
+# FOR A PARTICULAR PURPOSE.  See either the GNU General Public License or the 
+# Artistic License for more details.
 ################################################################################
 
 package WeBWorK::ContentGenerator::Instructor::UserList2;
@@ -74,7 +75,7 @@ use WeBWorK::File::Classlist;
 use File::Basename;
 #use WeBWorK::CGI::Carp qw(fatalsToBrowser);
 use WeBWorK::DB qw(check_user_id);
-use WeBWorK::Utils qw(readFile readDirectory cryptPassword);
+use WeBWorK::Utils qw(readFile readDirectory cryptPassword x);
 use constant HIDE_USERS_THRESHHOLD => 200;
 use constant EDIT_FORMS => [qw(saveEdit cancelEdit)];
 use constant PASSWORD_FORMS => [qw(savePassword cancelPassword)];
@@ -152,21 +153,9 @@ use constant  FIELD_PROPERTIES => {
 		access => "readwrite",
 	},
 	status => {
-		#type => "enumerable",
 		type => "status",
 		size => 4,
 		access => "readwrite",
-		#items => {
-		#	"C" => "Enrolled",
-		#	"D" => "Drop",
-		#	"A" => "Audit",
-		#},
-		#synonyms => {
-		#	qr/^[ce]/i => "C",
-		#	qr/^[dw]/i => "D",
-		#	qr/^a/i => "A",
-		#	"*" => "C",
-		#}
 	},
 	section => {
 		type => "text",
@@ -504,20 +493,6 @@ sub initialize {
 
 	# Check permissions
 	return unless $authz->hasPermissions($user, "access_instructor_tools");
-
-	#if (defined($r->param('addStudent'))) {
-	#	my $newUser = $db->newUser;
-	#	my $newPermissionLevel = $db->newPermissionLevel;
-	#	my $newPassword = $db->newPassword;
-	#	$newUser->user_id($r->param('newUserID'));
-	#	$newPermissionLevel->user_id($r->param('newUserID'));
-	#	$newPassword->user_id($r->param('newUserID'));
-	#	$newUser->status('C');
-	#	$newPermissionLevel->permission(0);
-	#	$db->addUser($newUser);
-	#	$db->addPermissionLevel($newPermissionLevel);
-	#	$db->addPassword($newPassword);
-	#}
 }
 
 
@@ -1313,25 +1288,7 @@ sub import_form {
 			-name=>"csvform",
 		),
 		CGI::input({type => "file",name => "file",id => "file",size => 40,maxlength => 80}),
-		#CGI::br(),
-		#CGI::checkbox(
-		#	-name=>'checkbox_name',
-		#	-checked=>1,
-		#	-value=>'Yes',
-		#	-label=>'Randomize Passwords?: '
-		#),
-		#CGI::br(),
-		#WeBWorK::CGI_labeled_input(
-			#-type=>"select",
-			#-id=>"import_select_source",
-			#-label_text=>$r->maketext("Import users from what file?").": ",
-			#-input_attr=>{
-				#-name => "action.import.source",
-				#-values => [ $self->getCSVList() ],
-				#-default => $actionParams{"action.import.source"}->[0] || "",
-				#-onchange => $onChange,
-			#}
-		#),
+
 		CGI::br(),
 		WeBWorK::CGI_labeled_input(
 			-type=>"select",
@@ -1904,7 +1861,7 @@ sub fieldEditHTML {
 		if ($type eq "status") {
 			my $status_name = $ce->status_abbrev_to_name($value);
 			if (defined $status_name) {
-				$value = "$status_name";
+				$value = $r->maketext($status_name);
 			}
 		}
 		return $value;
@@ -1976,7 +1933,7 @@ sub fieldEditHTML {
 			my $val = $roles{$role};
 			next unless $val <= $editorUserPermission;
 			push(@values, $val);
-			$labels{$val} = $role;
+			$labels{$val} = $r->maketext($role);
 			$default = $val if ( $value eq $role );
 		}
 
@@ -2144,7 +2101,8 @@ sub recordEditHTML {
 		my $fieldValue = $PermissionLevel->$field;
 		# get name out of permission level 
 		if ( $field eq 'permission' ) {
-			($fieldValue) = grep { $ce->{userRoles}->{$_} eq $fieldValue } ( keys ( %{$ce->{userRoles}} ) );
+		  ($fieldValue) = grep { $ce->{userRoles}->{$_} eq $fieldValue } ( keys ( %{$ce->{userRoles}} ) );
+		  $fieldValue = $r->maketext($fieldValue)
 		}
 		my %properties = %{ FIELD_PROPERTIES()->{$field} };
 		$properties{access} = 'readonly' unless $editMode;
@@ -2303,7 +2261,10 @@ sub output_JS{
 
 # Just tells template to output the stylesheet for Tabber
 sub output_tabber_CSS{
-	return "";
+  # capture names for maketext
+  x('Filter');
+  x('Sort');
+  return "";
 }
 
 #Tells template to output stylesheet for Jquery-UI
