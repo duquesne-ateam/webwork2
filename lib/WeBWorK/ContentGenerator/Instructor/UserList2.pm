@@ -249,7 +249,8 @@ sub getFlag {
 sub checkFileLocation {
   	my $self = shift;
 	my $extension = shift; $extension =~ s/.*\.//;
-	my $dir = shift; my $location = $uploadDir{$extension};
+	my $dir = shift;
+       	my $location = $uploadDir{$extension};
 	return unless defined($location);
 	return if $dir =~ m/^$location$/;
 	$location =~ s!/\.\*!!;
@@ -1333,11 +1334,11 @@ sub import_handler {
 	my $totalbytes;
 	my $r = $self->r;
 
-
 	my $dir = "$self->{courseRoot}/$self->{pwd}";
 
 	#Sets $fileIDhash to be the file.
 	my $fileIDhash = $self->r->param('file');
+	print $r->maketext($self->{ce}{webworkDirs}{uploadCache});
 	unless ($fileIDhash) {
 		$self->addbadmessage("You have not chosen a file to upload.");
 		$self->Refresh;
@@ -1347,7 +1348,6 @@ sub import_handler {
 	my ($id,$hash) = split(/\s+/,$fileIDhash);			
 	#Destroys spaces.
 	my $upload = WeBWorK::Upload->retrieve($id,$hash,dir=>$self->{ce}{webworkDirs}{uploadCache});
-
 	my $name = checkName($upload->filename);			#Taint checker.
 
 	# FIXME: Add collision checking.

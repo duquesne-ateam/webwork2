@@ -44,6 +44,7 @@ use WeBWorK::Localize;
 use WeBWorK::Utils::Tasks qw(fake_set fake_problem);
 use WeBWorK::AchievementEvaluator;
 use WeBWorK::Utils::AttemptsTable;
+use constant HOME => 'templates';
 
 ################################################################################
 # CGI param interface to this module (up-to-date as of v1.153)
@@ -1132,9 +1133,21 @@ sub title {
 # now altered to outsource most output operations to the template, main functions now are simply error checking and answer processing - ghe3
 sub body {
 	my $self = shift;
+	my $r = $self->r;
+	my $ce = $r->ce;
+	my $urlpath = $r->urlpath;
 	my $set = $self->{set};
 	my $problem = $self->{problem};
+	my $courseName = $urlpath->arg("courseID");
+	my $courseRoot = $ce->{courseDirs}{root};
 	my $pg = $self->{pg};
+	my $setID = $urlpath->arg("setID");
+	my $newFolderName = "$setID"."_Problem_$problem"."_Student_Uploads";
+
+	$self->{courseRoot} = $courseRoot;
+	$self->{pwd} = $self->checkPWD($r->param('pwd') || HOME);
+
+	my $root = $ce->{webworkURLs}->{root};
 
 	print CGI::p("Entering Problem::body subroutine.  
 	         This indicates an old style system.template file -- consider upgrading. ",
@@ -1468,6 +1481,82 @@ sub output_checkboxes{
 
 # output_submit_buttons
 
+# checks working directory
+sub checkPWD {
+	my $self = shift;
+	my $pwd = shift;
+	my $renameError = shift;
+
+	$pwd =~ s!//+!/!g;               # remove duplicate slashes
+	$pwd =~ s!(^|/)~!$1_!g;          # remove ~user references
+	$pwd =~ s!(^|/)(\.(/|$))+!$1!g;  # remove dot directories
+	
+	# remove dir/.. constructions
+	while ($pwd =~ s!((\.[^./]+|\.\.[^/]+|[^./][^/]*)/\.\.(/|$))!!) {};
+	
+	$pwd =~ s!/$!!;                        # remove trailing /
+	return if ($pwd =~ m!(^|/)\.\.(/|$)!); # Error if outside the root
+
+	# check for bad symbolic links
+	my @dirs = split('/',$pwd);
+	pop(@dirs) if $renameError;      # don't check file iteself in this case
+	my @path = ($self->{ce}{courseDirs}{root});
+	foreach my $dir (@dirs) {
+		push @path,$dir;
+		return if ($self->isSymLink(join('/',@path)));
+	}
+
+	my $original = $pwd;
+	$pwd =~ s!(^|/)\.!$1_!g;         # don't enter hidden directories
+	$pwd =~ s!^/!!;                  # remove leading /
+	$pwd =~ s![^-_./A-Z0-9~, ]!_!gi; # no illegal characters
+	return if $renameError && $original ne $pwd;
+
+	$pwd = '.' if $pwd eq '';
+	return $pwd;
+}
+
+sub checkName {
+	my $file = shift;
+	$file =~ s!.*[/\\]!!;               # remove directory
+	$file =~ s/[^-_.a-zA-Z0-9 ]/_/g;    # no illegal characters
+	$file =~ s/^\./_/;                  # no initial dot
+	$file = "newfile.txt" unless $file; # no blank names
+	return $file;
+}
+
+sub isSymLink {
+	my $self = shift; my $file = shift;
+	return 0 unless -l $file;
+
+	my $courseRoot = $self->{ce}{courseDirs}{root};
+	$courseRoot = readlink($courseRoot) if -l $courseRoot;
+	my $pwd = $self->{pwd} || $self->r->param('pwd') || HOME;
+	my $link = File::Spec->rel2abs(readlink($file),"$courseRoot/$pwd");
+	#
+	# Remove /./ and dir/../ constructs
+	#
+	$link =~ s!(^|/)(\.(/|$))+!$1!g;
+	while ($link =~ s!((\.[^./]+|\.\.[^/]+|[^./][^/]*)/\.\.(/|$))!!) {};
+
+	#
+	# Link is OK if it is in the course directory
+	#
+	return 0 if substr($link,0,length($courseRoot)) eq $courseRoot;
+
+	#
+	# Look through the list of valid paths to see if this link is OK
+	#
+	my $valid = $self->{ce}{webworkDirs}{valid_symlinks};
+	if (defined $valid && $valid) {
+		foreach my $path (@{$valid}) {
+			return 0 if substr($link,0,length($path)) eq $path;
+		}
+	}
+
+	return 1;
+}
+
 # prints out the submit button input elements that are available for the current problem
 
 sub output_submit_buttons{
@@ -1478,11 +1567,14 @@ sub output_submit_buttons{
 	my %will = %{ $self->{will} };
 	my $urlpath = $r->urlpath;
 	my $problem = $self->{problem};
+	my $problemNumber = $r->urlpath->arg("problemID");
 	my $courseID = $urlpath->arg("courseID");
 	my $user = $r->param('user');
 	my $effectiveUser = $r->param('effectiveUser');
 	my %showMeAnother = %{ $self->{showMeAnother} };
-	
+	my $setID = $r->urlpath->arg("setID");
+	my $newFolderName = "$setID"."_Problem_$problemNumber"."_Student_Uploads";
+
 	if ($will{requestNewSeed}){
 		print WeBWorK::CGI_labeled_input(-type=>"submit", -id=>"submitAnswers_id", -input_attr=>{-name=>"requestNewSeed", -value=>$r->maketext("Request New Version"), -onclick=>"this.form.target='_self'"});
 		return "";
@@ -1492,10 +1584,39 @@ sub output_submit_buttons{
         if ($can{checkAnswers}) {
         	print WeBWorK::CGI_labeled_input(-type=>"submit", -id=>"checkAnswers_id", -input_attr=>{-onclick=>"this.form.target='_self'",-name=>"checkAnswers", -value=>$r->maketext("Check Answers")});
   	}
-        print CGI::start_form(-method=>"POST",-enctype=>'multipart/form-data',-name=>"csform",);
-	print CGI::input({type=>=>"file",name=>"file",id=>"file",size=>40,maxlength=>80});
+	print $r->maketext($ce->{courseDirs}->{templates}.'/'."set$setID".'/'.$newFolderName);
 	print CGI::br();
-	print CGI::submit(-value=>'Upload File',);
+        print CGI::start_form(-method=>"POST",-enctype=>'multipart/form-data',-name=>"csvform",);
+	print CGI::input({type=>"file",name=>"file",id=>"file",size=>40,maxlength=>80});
+	print CGI::br();
+	print CGI::submit(-value=>"Upload File", -id=>"upload_file");
+
+	my $fileIDhash = $self->r->param('file');
+	unless ($fileIDhash) {
+		$self->addbadmessage("You have not chosen a file to upload.");
+		#$self->Refresh;
+		return;
+	}
+	my ($id,$hash) = split(/\s+/,$fileIDhash);			
+	my $dir = $ce->{courseDirs}->{templates}.'/'."set$setID".'/'.$newFolderName;
+	#my $upload = WeBWorK::Upload->retrieve($id,$hash,dir=>$self->{ce}{webworkDirs}{uploadCache});
+	my $upload = WeBWorK::Upload->retrieve($id,$hash,dir=>$self->{ce}{webworkDirs}{uploadCache});
+	my $name = checkName($upload->filename);			#Taint checker.
+	
+	my $file = "$dir/$name";
+
+	$upload->disposeTo($file);
+
+	if (-e $file) {
+	  $self->addgoodmessage("File '$name' uploaded successfully");
+	  if ($name =~ m/\.(tar|tar\.gz|tgz)$/ && $self->getFlag('unpack')) {
+	    if ($self->unpack($name) && $self->getFlag('autodelete')) {
+	      if (unlink($file)) {$self->addgoodmessage("Archive '$name' deleted")}
+	        else {$self->addbadmessage("Can't delete archive '$name': $!")}
+	    }
+	  }
+	}
+
 	if ($can{getSubmitButton}) {
         	if ($user ne $effectiveUser) {
         		# if acting as a student, make it clear that answer submissions will
