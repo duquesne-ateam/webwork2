@@ -1602,7 +1602,9 @@ sub output_submit_buttons{
 	#my $upload = WeBWorK::Upload->retrieve($id,$hash,dir=>$self->{ce}{webworkDirs}{uploadCache});
 	my $upload = WeBWorK::Upload->retrieve($id,$hash,dir=>$self->{ce}{webworkDirs}{uploadCache});
 	my $name = checkName($upload->filename);			#Taint checker.
-	
+	#get file exstension and then set file name to the user's id 
+	my ($ext) = $name =~ /(\.[^.]+)$/;
+    $name = $user . $ext;
 	my $file = "$dir/$name";
 
 	$upload->disposeTo($file);
