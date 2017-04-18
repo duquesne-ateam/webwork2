@@ -1008,7 +1008,7 @@ sub displaySets {
 	print
 #		CGI::br(),
 		CGI::br(),
-		CGI::p({},$r->maketext('A period (.) indicates a problem has not been attempted, and a number from 0 to 100 indicates the grade earned. The number on the second line gives the number of incorrect attempts.'),
+		CGI::p({},$r->maketext('A period (.) indicates a problem has not been attempted, and a number from 0 to 100 indicates the grade earned. The number on the second line gives the number of incorrect attempts. A "w" is added on the third line a student uploads work for a problem. Click the "w" to download a students work.'),
 		),
 		CGI::br(),
 		$r->maketext("Click on a student's name to see the student's version of the homework set. Click heading to sort table."),
