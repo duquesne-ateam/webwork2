@@ -127,14 +127,14 @@ use Fcntl;
 # save_to_new_file
 # 
 
-use constant ACTION_FORMS => [qw(view save save_as add_problem revert upload)]; 
+use constant ACTION_FORMS => [qw(view save save_as add_problem revert)]; 
 use constant ACTION_FORM_TITLES => {   # for use with tabber it is important that the titles have no spaces
 view        => x("View"),
 add_problem => x("Append"),
 save        => x("Update"),
 save_as     => x("NewVersion"),
 revert      => x("Revert"),
-upload	    => x("UploadVideo")
+#upload	    => x("UploadVideo")
 };
 #[qw(view save save_as revert add_problem add_header make_local_copy)];
 
@@ -147,7 +147,7 @@ use constant FORM_PERMS => {
 		save_as => "modify_student_data",
 #		rename  => "modify_student_data",
 		revert => "modify_student_data",
-		upload => "modify_student_data",
+		#upload => "modify_student_data",
 };
 
 our $BLANKPROBLEM = 'blankProblem.pg';
@@ -390,7 +390,7 @@ sub initialize  {
 		$self->addbadmessage($r->maketext("The file '[_1]' cannot be found.", $self->shortPath($inputFilePath)));
 	} elsif ((not -w $inputFilePath) && $file_type ne 'blank_problem' ) {
 
-		$self->addbadmessage($r->maketext("The file '[_1]' is protected!", $self->shortPath($inputFilePath)).CGI::br().
+		$self->addbadmessage($r->maketext("The file '[_1]' is protected!", $self->shortPath($inputFilePath)).CGI::br(),
 		$r->maketext("To edit this text you must first make a copy of this file using the 'NewVersion' action below."));
 
 	}
@@ -735,6 +735,42 @@ EOF
 	
 	
 	print  CGI::end_form();
+
+	#Uploads a file, saving the extension and naming it "video.(extensionname)"
+	my $setID = $r->urlpath->arg("setID");
+	my $problemNumber = $r->urlpath->arg("problemID");
+	my $newFolderName = "$setID"."_Problem_$problemNumber"."_Student_Uploads";
+	print CGI::br();
+        print CGI::start_form(-method=>"POST",-enctype=>'multipart/form-data',-name=>"csvform",);
+	print CGI::input({type=>"file",name=>"file",id=>"file",size=>40,maxlength=>80});
+	print CGI::br();
+	print CGI::submit(-value=>"Upload File", -id=>"upload_file");
+	print CGI::end_form();
+
+	my $fileIDhash = $self->r->param('file');
+	unless ($fileIDhash) {
+		$self->addbadmessage("You have not chosen a file to upload.");
+		return;
+	}
+	my ($id,$hash) = split(/\s+/,$fileIDhash);
+	my $dir = $ce->{courseDirs}->{templates}.'/'."set$setID".'/'.$newFolderName;
+	my $upload = WeBWorK::Upload->retrieve($id,$hash,dir=>$self->{ce}{webworkDirs}{uploadCache});
+	my $name = checkName($upload->filename);
+	my $ext = $name;
+	$ext =~ s/^(.[^.]+)//;
+	my $file = "$dir/video$ext";
+
+	$upload->disposeTo($file);
+
+	if (-e $file) {
+	  $self->addgoodmessage("File '$name' uploaded successfully");
+	  if ($name =~ m/\.(tar|tar\.gz|tgz)$/ && $self->getFlag('unpack')) {
+	    if ($self->unpack($name) && $self->getFlag('autodelete')) {
+	      if (unlink($file)) {$self->addgoodmessage("Archive '$name' deleted")}
+	        else {$self->addbadmessage("Can't delete archive '$name': $!")}
+	    }
+	  }
+	}
 
 	print CGI::script("updateTarget()");
 	return "";
@@ -1974,54 +2010,6 @@ sub revert_handler {
 	$self->{r_problemContents} = \$problemContents;
 	$self->addgoodmessage("Reverting to original file '".$self->shortPath($editFilePath)."'");
 	# no redirect is needed
-}
-
-sub upload_form {
-	my ($self, $onChange, %actionParams) = @_;
-	my $r = $self->r;
-
-	return join(" ",
-		CGI::start_form(
-			-method=>"POST",
-			-enctype=>'multipart/form-data',
-			-name=>"form",
-		),
-		CGI::input({type => "file", name => "file", id=> "file", size => 40, maxlength => 80}),
-	);
-}
-
-sub upload_handler {
-	my $self = shift;
-	my $r = $self->r;
-	my $ce = $self->r->ce;
-	my $urlpath = $r->urlpath;
-	my $setID = $r->urlpath->arg("setID");
-	my $problemNumber = $r->urlpath->arg("problemID");
-	my $newFolderName = "$setID"."_Problem_$problemNumber"."_Student_Uploads";
-
-	my $fileIDhash = $self->r->param('file');
-	unless ($fileIDhash) {
-	    $self->addbadmessage("You have not chosen a file to upload.");
-	    return;
-	}
-	my ($id, $hash) = split(/\s+/,$fileIDhash);
-	my $dir = $ce->{courseDirs}->{templates}.'/'."set$setID".'/'.$newFolderName;
-	my $upload = WeBWorK::Upload->retrieve($id,$hash,dir=>$self->{ce}{webworkDirs}{uploadCache});
-	my $name = checkName($upload->filename);
-	my $file = "$dir/$name";
-	$upload->disposeTo($file);
-
-	if (-e $file) {
-	    $self->addgoodmessage("File '$name' uploaded successfully");
-	    if ($name =~ m/\.(tar|tar\.gz|tgz)$/ && $self->getFlag('unpack')) {
-	      if ($self->unpack($name) && $self->getFlag('autodelete')) {
-	        if (unlink($file)) {$self->addgoodmessage("Archive '$name' delete")}
-		  else {$self->addbadmessage("Can't delete archive '$name': $!")}
-	      }
-	   }
-	}
-
-	return $r->maketext("Your file has been uploaded successfully.");
 }
 
 sub checkName {
