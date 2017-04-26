@@ -1571,6 +1571,10 @@ sub isSymLink {
 	return 1;
 }
 
+<<<<<<< HEAD
+=======
+
+>>>>>>> ab05b5e36fd2fc034e65747470f91e0c9579274b
 # prints out the submit button input elements that are available for the current problem
 
 sub output_submit_buttons{
@@ -1588,7 +1592,11 @@ sub output_submit_buttons{
 	my %showMeAnother = %{ $self->{showMeAnother} };
 	my $setID = $r->urlpath->arg("setID");
 	my $newFolderName = "$setID"."_Problem_$problemNumber"."_Student_Uploads";
+<<<<<<< HEAD
 
+=======
+	
+>>>>>>> ab05b5e36fd2fc034e65747470f91e0c9579274b
 	if ($will{requestNewSeed}){
 		print WeBWorK::CGI_labeled_input(-type=>"submit", -id=>"submitAnswers_id", -input_attr=>{-name=>"requestNewSeed", -value=>$r->maketext("Request New Version"), -onclick=>"this.form.target='_self'"});
 		return "";
@@ -1597,12 +1605,19 @@ sub output_submit_buttons{
         print WeBWorK::CGI_labeled_input(-type=>"submit", -id=>"previewAnswers_id", -input_attr=>{-onclick=>"this.form.target='_self'",-name=>"previewAnswers", -value=>$r->maketext("Preview My Answers")});
         if ($can{checkAnswers}) {
         	print WeBWorK::CGI_labeled_input(-type=>"submit", -id=>"checkAnswers_id", -input_attr=>{-onclick=>"this.form.target='_self'",-name=>"checkAnswers", -value=>$r->maketext("Check Answers")});
+<<<<<<< HEAD
   	}
 
 	# Uploads file to problem uploads file.
 	print CGI::br();
 	print CGI::br();
         print CGI::start_form(-method=>"POST",-enctype=>'multipart/form-data',-name=>"csvform",);
+=======
+        }
+    #print $r->maketext($ce->{courseDirs}->{templates}.'/'."set$setID".'/'.$newFolderName);
+	print CGI::br();
+    print CGI::start_form(-method=>"POST",-enctype=>'multipart/form-data',-name=>"csvform",);
+>>>>>>> ab05b5e36fd2fc034e65747470f91e0c9579274b
 	print CGI::input({type=>"file",name=>"file",id=>"file",size=>40,maxlength=>80});
 	print CGI::br();
 	print CGI::submit(-value=>"Upload File", -id=>"upload_file");
@@ -1615,11 +1630,18 @@ sub output_submit_buttons{
 	}
 	my ($id,$hash) = split(/\s+/,$fileIDhash);			
 	my $dir = $ce->{courseDirs}->{templates}.'/'."set$setID".'/'.$newFolderName;
+<<<<<<< HEAD
+	my $upload = WeBWorK::Upload->retrieve($id,$hash,dir=>$self->{ce}{webworkDirs}{uploadCache});
+	my $name = checkName($upload->filename);			#Taint checker.
+	
+=======
+	#my $upload = WeBWorK::Upload->retrieve($id,$hash,dir=>$self->{ce}{webworkDirs}{uploadCache});
 	my $upload = WeBWorK::Upload->retrieve($id,$hash,dir=>$self->{ce}{webworkDirs}{uploadCache});
 	my $name = checkName($upload->filename);			#Taint checker.
 	#get file exstension and then set file name to the user's id 
 	my ($ext) = $name =~ /(\.[^.]+)$/;
-	$name = $user . $ext;
+    $name = $user . $ext;
+>>>>>>> ab05b5e36fd2fc034e65747470f91e0c9579274b
 	my $file = "$dir/$name";
 
 	$upload->disposeTo($file);
@@ -1633,7 +1655,12 @@ sub output_submit_buttons{
 	    }
 	  }
 	}
+<<<<<<< HEAD
+
+	if ($can{getSubmitButton}) {
+=======
         if ($can{getSubmitButton}) {
+>>>>>>> ab05b5e36fd2fc034e65747470f91e0c9579274b
         	if ($user ne $effectiveUser) {
         		# if acting as a student, make it clear that answer submissions will
         		# apply to the student's records, not the professor's.

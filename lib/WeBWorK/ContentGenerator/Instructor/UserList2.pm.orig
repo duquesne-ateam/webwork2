@@ -179,6 +179,7 @@ use constant  FIELD_PROPERTIES => {
 	    access => 'hidden',
 	},
 };
+<<<<<<< HEAD
 
 ################################################
 #
@@ -231,6 +232,19 @@ sub getFlag {
   return $value;
 }
 
+sub checkFileLocation {
+  	my $self = shift;
+	my $extension = shift; $extension =~ s/.*\.//;
+	my $dir = shift;
+       	my $location = $uploadDir{$extension};
+	return unless defined($location);
+	return if $dir =~ m/^$location$/;
+	$location =~ s!/\.\*!!;
+	return if $dir =~ m/^$location$/;
+	# Legacy warning.
+	#$self->addbadmessage("Files with extension '.$extension' usually belong in '$location'");
+}
+
 sub checkName {
 	my $file = shift;
 	$file =~ s!.*[/\\]!!;               # remove directory
@@ -241,13 +255,12 @@ sub checkName {
 }
 
 sub isSymLink {
-	my $self = shift;
-       	my $file = shift;
+	my $self = shift; my $file = shift;
 	return 0 unless -l $file;
 
 	my $courseRoot = $self->{ce}{courseDirs}{root};
 	$courseRoot = readlink($courseRoot) if -l $courseRoot;
-	my $pwd = $self->{pwd} || $self->r->param('pwd');
+	my $pwd = $self->{pwd} || $self->r->param('pwd') || HOME;
 	my $link = File::Spec->rel2abs(readlink($file),"$courseRoot/$pwd");
 	#
 	# Remove /./ and dir/../ constructs
@@ -420,6 +433,9 @@ EOF
        # print CGI::script("checkFiles(); checkFile();");
 }
 
+
+=======
+>>>>>>> ab05b5e36fd2fc034e65747470f91e0c9579274b
 sub pre_header_initialize {
 	my $self          = shift;
 	my $r             = $self->r;
@@ -479,12 +495,9 @@ sub body {
 	my $ce           = $r->ce;
 	my $authz        = $r->authz;	
 	my $courseName   = $urlpath->arg("courseID");
-	my $courseRoot   = $ce->{courseDirs}{root};
 	my $setID        = $urlpath->arg("setID");       
 	my $user         = $r->param('user');
 	
-	$self->{courseRoot} = $courseRoot;		#Used for uploading files.
-	$self->{pwd} = $self->checkPWD($r->param('pwd'));
 	my $root = $ce->{webworkURLs}->{root};
 
 	# templates for getting field names
@@ -1250,25 +1263,22 @@ sub import_form {
 	my $r = $self->r;
 	
 	return join(" ",
-		CGI::start_form(
-			-method=>"POST",
-			-id=>"csvform",
-			-enctype=>'multipart/form-data',
-			-name=>"csvform",
+		WeBWorK::CGI_labeled_input(
+			-type=>"select",
+			-id=>"import_select_source",
+			-label_text=>$r->maketext("Import users from what file?").": ",
+			-input_attr=>{
+				-name => "action.import.source",
+				-values => [ $self->getCSVList() ],
+				-default => $actionParams{"action.import.source"}->[0] || "",
+				-onchange => $onChange,
+			}
 		),
-		# TODO: Legacy support
-		#WeBWorK::CGI_labeled_input(
-			#-type=>"select",
-			#-id=>"import_select_source",
-			#-label_text=>$r->maketext("Import users from what file?").": ",
-			#-input_attr=>{
-				#-name => "action.import.source",
-				#-values => [ $self->getCSVList() ],
-				#-default => $actionParams{"action.import.source"}->[0] || "",
-				#-onchange => $onChange,
-			#}
-		#),
+<<<<<<< HEAD
 		CGI::input({type => "file",name => "file",id => "file",size => 40,maxlength => 80}),
+
+=======
+>>>>>>> ab05b5e36fd2fc034e65747470f91e0c9579274b
 		CGI::br(),
 		WeBWorK::CGI_labeled_input(
 			-type=>"select",
@@ -1308,10 +1318,9 @@ sub import_form {
 
 sub import_handler {
 	my ($self, $genericParams, $actionParams, $tableParams) = @_;
-	my ($bytesread, $buffer);
-	my $num_bytes = 1024;
-	my $totalbytes;
 	my $r = $self->r;
+<<<<<<< HEAD
+
 	my $dir = "$self->{courseRoot}/$self->{pwd}";
 
 	#Sets $fileIDhash to be the file.
@@ -1337,6 +1346,7 @@ sub import_handler {
 			return;
 		}
 	}
+	$self->checkFileLocation($name,$self->{pwd});
 
 	my $file = "$dir/$name";
 	my $type = $self->getFlag('format','Automatic');
@@ -1375,7 +1385,10 @@ sub import_handler {
 
 	my ($genericParams, $actionParams, $tableParams) = @_;
 
+=======
+	
 	my $source = $actionParams->{"action.import.source"}->[0];
+>>>>>>> ab05b5e36fd2fc034e65747470f91e0c9579274b
 	my $add = $actionParams->{"action.import.add"}->[0];
 	my $replace = $actionParams->{"action.import.replace"}->[0];
 	
@@ -1684,7 +1697,6 @@ sub importUsersFromCSV {
 	my $db    = $r->db;
 	my $dir   = $ce->{courseDirs}->{templates};
 	my $user  = $r->param('user');
-	my $pwd   = $self->{pwd};
 	
 	die $r->maketext("illegal character in input: '/'") if $fileName =~ m|/|;
 	die $r->maketext("won't be able to read from file [_1]/[_2]: does it exist? is it readable?", $dir, $fileName)
@@ -1769,11 +1781,6 @@ sub importUsersFromCSV {
 			push @added, $user_id;
 		}
 	}
-
-	# Deletes the file after uploading.
-
-	if (unlink("$dir/$fileName")) {$self->addgoodmessage("File '$fileName' successfully removed")}
-	else {$self->addbadmessage("File '$fileName' not removed: $!")}
 	
 	return \@replaced, \@added, \@skipped;
 }
