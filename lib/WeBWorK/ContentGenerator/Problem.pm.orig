@@ -1571,10 +1571,6 @@ sub isSymLink {
 	return 1;
 }
 
-<<<<<<< HEAD
-=======
-
->>>>>>> ab05b5e36fd2fc034e65747470f91e0c9579274b
 # prints out the submit button input elements that are available for the current problem
 
 sub output_submit_buttons{
@@ -1592,11 +1588,7 @@ sub output_submit_buttons{
 	my %showMeAnother = %{ $self->{showMeAnother} };
 	my $setID = $r->urlpath->arg("setID");
 	my $newFolderName = "$setID"."_Problem_$problemNumber"."_Student_Uploads";
-<<<<<<< HEAD
 
-=======
-	
->>>>>>> ab05b5e36fd2fc034e65747470f91e0c9579274b
 	if ($will{requestNewSeed}){
 		print WeBWorK::CGI_labeled_input(-type=>"submit", -id=>"submitAnswers_id", -input_attr=>{-name=>"requestNewSeed", -value=>$r->maketext("Request New Version"), -onclick=>"this.form.target='_self'"});
 		return "";
@@ -1605,19 +1597,41 @@ sub output_submit_buttons{
         print WeBWorK::CGI_labeled_input(-type=>"submit", -id=>"previewAnswers_id", -input_attr=>{-onclick=>"this.form.target='_self'",-name=>"previewAnswers", -value=>$r->maketext("Preview My Answers")});
         if ($can{checkAnswers}) {
         	print WeBWorK::CGI_labeled_input(-type=>"submit", -id=>"checkAnswers_id", -input_attr=>{-onclick=>"this.form.target='_self'",-name=>"checkAnswers", -value=>$r->maketext("Check Answers")});
-<<<<<<< HEAD
   	}
 
+<<<<<<< HEAD
 	# Uploads file to problem uploads file.
 	print CGI::br();
+=======
+#javascript to play video in new page, cant get url to work
+	#print CGI::script(<<EOF);
+	#function play(video_html){
+	#var win = window.open("", "Title", "toolbar=no, location=no, directories=no, status=no, menubar=no, scrollbars=yes, resizable=yes, #width=780, height=200, top="+(screen.height-400)+", left="+(screen.width-840));
+	#win.document.body.innerHTML = video_html;
+	#}
+#EOF
+print CGI::script(<<EOF);
+function play(video_html){
+	window.open(video_html);
+}
+EOF
+# button when clicked will download video uploaded by the professor
+	my $vid_filename = 'video';
+	my @file_exts = qw(.mp4 .mov .qt .ogg .wav);
+	my $vid_dir = 'templates/set' . $setID . '/' . $setID . '_Problem_' . $problemNumber . '_Student_Uploads';
+        my $vid_file = $ce->{webworkDirs}{courses} . '/' . $courseID . "/$vid_dir/$vid_filename";$urlpath = $self->r->urlpath;
+	foreach my $file_ext (@file_exts){
+		if (-e ("$vid_file" . "$file_ext")) {
+			my $fileManagerPage = $urlpath->newFromModule("WeBWorK::ContentGenerator::Grades", $r, courseID => $courseID);
+       			my $fileManagerURL  = $self->systemLink($fileManagerPage, params => {download => $vid_filename . $file_ext, pwd => $vid_dir});
+			#my $video_html = ' <video width="320" height="240" controls><source src="' . $fileManagerURL . '" type="video/mp4"><source src="' . $fileManagerURL . '" type="video/ogg">Your browser does not support the video tag.</video>';
+			print CGI::button({onclick => "play('$fileManagerURL')", value => 'Video Hint'});
+		}
+	}
+	#print $r->maketext($ce->{courseDirs}->{templates}.'/'."set$setID".'/'.$newFolderName);
+>>>>>>> 538b6609000c68c3efbb2dddc14d188218ae1307
 	print CGI::br();
         print CGI::start_form(-method=>"POST",-enctype=>'multipart/form-data',-name=>"csvform",);
-=======
-        }
-    #print $r->maketext($ce->{courseDirs}->{templates}.'/'."set$setID".'/'.$newFolderName);
-	print CGI::br();
-    print CGI::start_form(-method=>"POST",-enctype=>'multipart/form-data',-name=>"csvform",);
->>>>>>> ab05b5e36fd2fc034e65747470f91e0c9579274b
 	print CGI::input({type=>"file",name=>"file",id=>"file",size=>40,maxlength=>80});
 	print CGI::br();
 	print CGI::submit(-value=>"Upload File", -id=>"upload_file");
@@ -1630,18 +1644,15 @@ sub output_submit_buttons{
 	}
 	my ($id,$hash) = split(/\s+/,$fileIDhash);			
 	my $dir = $ce->{courseDirs}->{templates}.'/'."set$setID".'/'.$newFolderName;
-<<<<<<< HEAD
-	my $upload = WeBWorK::Upload->retrieve($id,$hash,dir=>$self->{ce}{webworkDirs}{uploadCache});
-	my $name = checkName($upload->filename);			#Taint checker.
-	
-=======
-	#my $upload = WeBWorK::Upload->retrieve($id,$hash,dir=>$self->{ce}{webworkDirs}{uploadCache});
 	my $upload = WeBWorK::Upload->retrieve($id,$hash,dir=>$self->{ce}{webworkDirs}{uploadCache});
 	my $name = checkName($upload->filename);			#Taint checker.
 	#get file exstension and then set file name to the user's id 
 	my ($ext) = $name =~ /(\.[^.]+)$/;
+<<<<<<< HEAD
+	$name = $user . $ext;
+=======
     $name = $user . $ext;
->>>>>>> ab05b5e36fd2fc034e65747470f91e0c9579274b
+>>>>>>> 538b6609000c68c3efbb2dddc14d188218ae1307
 	my $file = "$dir/$name";
 
 	$upload->disposeTo($file);
@@ -1655,12 +1666,7 @@ sub output_submit_buttons{
 	    }
 	  }
 	}
-<<<<<<< HEAD
-
-	if ($can{getSubmitButton}) {
-=======
         if ($can{getSubmitButton}) {
->>>>>>> ab05b5e36fd2fc034e65747470f91e0c9579274b
         	if ($user ne $effectiveUser) {
         		# if acting as a student, make it clear that answer submissions will
         		# apply to the student's records, not the professor's.
