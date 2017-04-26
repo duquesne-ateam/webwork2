@@ -1584,6 +1584,32 @@ sub output_submit_buttons{
         if ($can{checkAnswers}) {
         	print WeBWorK::CGI_labeled_input(-type=>"submit", -id=>"checkAnswers_id", -input_attr=>{-onclick=>"this.form.target='_self'",-name=>"checkAnswers", -value=>$r->maketext("Check Answers")});
   	}
+
+#javascript to play video in new page, cant get url to work
+	#print CGI::script(<<EOF);
+	#function play(video_html){
+	#var win = window.open("", "Title", "toolbar=no, location=no, directories=no, status=no, menubar=no, scrollbars=yes, resizable=yes, #width=780, height=200, top="+(screen.height-400)+", left="+(screen.width-840));
+	#win.document.body.innerHTML = video_html;
+	#}
+#EOF
+print CGI::script(<<EOF);
+function play(video_html){
+	window.open(video_html);
+}
+EOF
+# button when clicked will download video uploaded by the professor
+	my $vid_filename = 'video';
+	my @file_exts = qw(.mp4 .mov .qt .ogg .wav);
+	my $vid_dir = 'templates/set' . $setID . '/' . $setID . '_Problem_' . $problemNumber . '_Student_Uploads';
+        my $vid_file = $ce->{webworkDirs}{courses} . '/' . $courseID . "/$vid_dir/$vid_filename";$urlpath = $self->r->urlpath;
+	foreach my $file_ext (@file_exts){
+		if (-e ("$vid_file" . "$file_ext")) {
+			my $fileManagerPage = $urlpath->newFromModule("WeBWorK::ContentGenerator::Grades", $r, courseID => $courseID);
+       			my $fileManagerURL  = $self->systemLink($fileManagerPage, params => {download => $vid_filename . $file_ext, pwd => $vid_dir});
+			#my $video_html = ' <video width="320" height="240" controls><source src="' . $fileManagerURL . '" type="video/mp4"><source src="' . $fileManagerURL . '" type="video/ogg">Your browser does not support the video tag.</video>';
+			print CGI::button({onclick => "play('$fileManagerURL')", value => 'Video Hint'});
+		}
+	}
 	#print $r->maketext($ce->{courseDirs}->{templates}.'/'."set$setID".'/'.$newFolderName);
 	print CGI::br();
         print CGI::start_form(-method=>"POST",-enctype=>'multipart/form-data',-name=>"csvform",);
