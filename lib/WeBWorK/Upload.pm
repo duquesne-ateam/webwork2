@@ -191,7 +191,7 @@ sub retrieve {
 	my ($invocant, $uuid, $hash, %options) = @_;
 	
 	croak "no upload ID specified" unless $uuid;
-	croak "no upload hash specified" unless $hash;
+	croak "no upload hash specified".$hash unless $hash;
 	
 	my $infoName = "$uuid.info";
 	my $infoPath = "$options{dir}/$infoName";

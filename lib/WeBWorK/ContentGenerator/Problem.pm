@@ -1584,7 +1584,9 @@ sub output_submit_buttons{
         if ($can{checkAnswers}) {
         	print WeBWorK::CGI_labeled_input(-type=>"submit", -id=>"checkAnswers_id", -input_attr=>{-onclick=>"this.form.target='_self'",-name=>"checkAnswers", -value=>$r->maketext("Check Answers")});
   	}
-	print $r->maketext($ce->{courseDirs}->{templates}.'/'."set$setID".'/'.$newFolderName);
+
+	# Uploads file to problem uploads file.
+	print CGI::br();
 	print CGI::br();
         print CGI::start_form(-method=>"POST",-enctype=>'multipart/form-data',-name=>"csvform",);
 	print CGI::input({type=>"file",name=>"file",id=>"file",size=>40,maxlength=>80});
@@ -1599,7 +1601,6 @@ sub output_submit_buttons{
 	}
 	my ($id,$hash) = split(/\s+/,$fileIDhash);			
 	my $dir = $ce->{courseDirs}->{templates}.'/'."set$setID".'/'.$newFolderName;
-	#my $upload = WeBWorK::Upload->retrieve($id,$hash,dir=>$self->{ce}{webworkDirs}{uploadCache});
 	my $upload = WeBWorK::Upload->retrieve($id,$hash,dir=>$self->{ce}{webworkDirs}{uploadCache});
 	my $name = checkName($upload->filename);			#Taint checker.
 	
