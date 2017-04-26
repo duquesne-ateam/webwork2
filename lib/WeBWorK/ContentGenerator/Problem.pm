@@ -44,6 +44,7 @@ use WeBWorK::Localize;
 use WeBWorK::Utils::Tasks qw(fake_set fake_problem);
 use WeBWorK::AchievementEvaluator;
 use WeBWorK::Utils::AttemptsTable;
+use constant HOME => 'templates';
 
 ################################################################################
 # CGI param interface to this module (up-to-date as of v1.153)
@@ -515,7 +516,7 @@ sub pre_header_initialize {
 			$problem->problem_seed($problemSeed);
         }	
 
-		my $visiblityStateClass = ($set->visible) ? $r->maketext("font-visible") : $r->maketext("font-hidden");
+		my $visiblityStateClass = ($set->visible) ? "font-visible" : "font-hidden";
 		my $visiblityStateText = ($set->visible) ? $r->maketext("visible to students")."." : $r->maketext("hidden from students").".";
 		$self->addmessage(CGI::span($r->maketext("This set is [_1]", CGI::span({class=>$visiblityStateClass}, $visiblityStateText))));
 
@@ -954,7 +955,7 @@ sub siblings {
 		$progress_bar .= CGI::div({-class=>"correct-progress set-id-tooltip",-style=>"width:$progress_bar_correct_width%",
 					   "aria-label"=>"correct progress bar for current problem set",
 					   "data-toggle"=>"tooltip", "data-placement"=>"bottom", title=>"", 
-					   "data-original-title"=>$r->maketext("Correct: $total_correct/$num_of_problems")
+					   "data-original-title"=>$r->maketext("Correct: [_1]/[_2]",$total_correct,$num_of_problems)
 					  });
 		# perfect scores deserve some stars (&#9733;)
 		$progress_bar .= ($total_correct == $num_of_problems)?"&#9733;Perfect&#9733;":"";
@@ -964,7 +965,7 @@ sub siblings {
 		$progress_bar .= CGI::div({-class=>"inprogress-progress set-id-tooltip",-style=>"width:$progress_bar_inprogress_width%",
 					   "aria-label"=>"in progress bar for current problem set",
 					   "data-toggle"=>"tooltip", "data-placement"=>"bottom", title=>"", 
-					   "data-original-title"=>$r->maketext("In progress: $total_inprogress/$num_of_problems")
+					   "data-original-title"=>$r->maketext("In progress: [_1]/[_2]",$total_inprogress, $num_of_problems)
 					  });
 		$progress_bar .= CGI::end_div();
 	    }
@@ -972,7 +973,7 @@ sub siblings {
 		$progress_bar .= CGI::div({-class=>"incorrect-progress set-id-tooltip",-style=>"width:$progress_bar_incorrect_width%",
 					   "aria-label"=>"incorrect progress bar for current problem set",
 					   "data-toggle"=>"tooltip", "data-placement"=>"bottom", title=>"", 
-					   "data-original-title"=>$r->maketext("Incorrect: $total_incorrect/$num_of_problems")
+					   "data-original-title"=>$r->maketext("Incorrect: [_1]/[_2]",$total_incorrect,$num_of_problems)
 					  });
 		$progress_bar .= CGI::end_div();
 	    }
@@ -980,7 +981,7 @@ sub siblings {
 		$progress_bar .= CGI::div({-class=>"unattempted-progress set-id-tooltip",-style=>"width:$progress_bar_unattempted_width%",
 					   "aria-label"=>"unattempted progress bar for current problem set",
 					   "data-toggle"=>"tooltip", "data-placement"=>"bottom", title=>"", 
-					   "data-original-title"=>$r->maketext("Unattempted: $unattempted/$num_of_problems")
+					   "data-original-title"=>$r->maketext("Unattempted: [_1]/[_2]",$unattempted,$num_of_problems)
 					  });
 		$progress_bar .= CGI::end_div();
 	    }
@@ -1059,23 +1060,23 @@ sub nav {
 	if ($prevID) {
 		my $prevPage = $urlpath->newFromModule(__PACKAGE__, $r, 
 			courseID => $courseID, setID => $setID, problemID => $prevID);
-		push @links, $r->maketext("Previous Problem"), $r->location . $prevPage->path, $r->maketext("navPrev");
+		push @links, $r->maketext("Previous Problem"), $r->location . $prevPage->path, $r->maketext("Previous Problem");
 	} else {
-		push @links, $r->maketext("Previous Problem"), "", $r->maketext("navPrevGrey");
+		push @links, $r->maketext("Previous Problem"), "", $r->maketext("Previous Problem");
 	}
 
 	if (defined($setID) && $setID ne 'Undefined_Set') {
-		push @links, $r->maketext("Problem List"), $r->location . $urlpath->parent->path, $r->maketext("navProbList");
+		push @links, $r->maketext("Problem List"), $r->location . $urlpath->parent->path, $r->maketext("Problem List");
 	} else {
-		push @links, $r->maketext("Problem List"), "", $r->maketext("navProbListGrey");
+		push @links, $r->maketext("Problem List"), "", $r->maketext("Problem List");
 	}
 
 	if ($nextID) {
 		my $nextPage = $urlpath->newFromModule(__PACKAGE__, $r, 
 			courseID => $courseID, setID => $setID, problemID => $nextID);
-		push @links, $r->maketext("Next Problem"), $r->location . $nextPage->path, $r->maketext("navNext");
+		push @links, $r->maketext("Next Problem"), $r->location . $nextPage->path, $r->maketext("Next Problem");
 	} else {
-		push @links, $r->maketext("Next Problem"), "", $r->maketext("navNextGrey");
+		push @links, $r->maketext("Next Problem"), "", $r->maketext("Next Problem");
 	}
 
 	my $tail = "";
@@ -1084,6 +1085,33 @@ sub nav {
 	$tail .= "&showOldAnswers=".$self->{will}->{showOldAnswers}
 		if defined $self->{will}->{showOldAnswers};
 	return $self->navMacro($args, $tail, @links);
+}
+
+sub path {
+	my ($self, $args) = @_;
+	my $r = $self->r;
+	my $urlpath       = $r->urlpath;
+	my $courseName    = $urlpath->arg("courseID");
+	my $setName       = $urlpath->arg("setID") || '';
+	my $problemNumber = $urlpath->arg("problemID") || '';
+	my $prettyProblemNumber = $problemNumber;
+	
+	if ($setName) {
+	    my $set = $r->db->getGlobalSet($setName);
+	    if ($set && $set->assignment_type eq 'jitar' && $problemNumber) {
+		$prettyProblemNumber = join('.',jitar_id_to_seq($problemNumber));
+	    }
+	}
+
+	my @path = ( 'WeBWorK', $r->location,
+	          "$courseName", $r->location."/$courseName",
+	          "$setName",    $r->location."/$courseName/$setName",
+	          "$prettyProblemNumber", $r->location."/$courseName/$setName/$problemNumber",
+	);
+	
+	print $self->pathMacro($args, @path);
+	
+	return "";
 }
 
 sub title {
@@ -1105,9 +1133,21 @@ sub title {
 # now altered to outsource most output operations to the template, main functions now are simply error checking and answer processing - ghe3
 sub body {
 	my $self = shift;
+	my $r = $self->r;
+	my $ce = $r->ce;
+	my $urlpath = $r->urlpath;
 	my $set = $self->{set};
 	my $problem = $self->{problem};
+	my $courseName = $urlpath->arg("courseID");
+	my $courseRoot = $ce->{courseDirs}{root};
 	my $pg = $self->{pg};
+	my $setID = $urlpath->arg("setID");
+	my $newFolderName = "$setID"."_Problem_$problem"."_Student_Uploads";
+
+	$self->{courseRoot} = $courseRoot;
+	$self->{pwd} = $self->checkPWD($r->param('pwd') || HOME);
+
+	my $root = $ce->{webworkURLs}->{root};
 
 	print CGI::p("Entering Problem::body subroutine.  
 	         This indicates an old style system.template file -- consider upgrading. ",
@@ -1285,7 +1325,7 @@ sub output_checkboxes{
 	my $useKnowlsForSolutions = $ce->{pg}->{options}->{use_knowls_for_solutions};
 	if ($can{showCorrectAnswers} or $can{showAnsGroupInfo} or 
 	    $can{showAnsHashInfo} or $can{showPGInfo} or $can{showResourceInfo} ) {
-		print "Show: &nbsp;&nbsp;";
+		print $r->maketext("Show:")."&nbsp;&nbsp;";
 	}
 	if ($can{showCorrectAnswers}) {
 		print WeBWorK::CGI_labeled_input(
@@ -1441,6 +1481,82 @@ sub output_checkboxes{
 
 # output_submit_buttons
 
+# checks working directory
+sub checkPWD {
+	my $self = shift;
+	my $pwd = shift;
+	my $renameError = shift;
+
+	$pwd =~ s!//+!/!g;               # remove duplicate slashes
+	$pwd =~ s!(^|/)~!$1_!g;          # remove ~user references
+	$pwd =~ s!(^|/)(\.(/|$))+!$1!g;  # remove dot directories
+	
+	# remove dir/.. constructions
+	while ($pwd =~ s!((\.[^./]+|\.\.[^/]+|[^./][^/]*)/\.\.(/|$))!!) {};
+	
+	$pwd =~ s!/$!!;                        # remove trailing /
+	return if ($pwd =~ m!(^|/)\.\.(/|$)!); # Error if outside the root
+
+	# check for bad symbolic links
+	my @dirs = split('/',$pwd);
+	pop(@dirs) if $renameError;      # don't check file iteself in this case
+	my @path = ($self->{ce}{courseDirs}{root});
+	foreach my $dir (@dirs) {
+		push @path,$dir;
+		return if ($self->isSymLink(join('/',@path)));
+	}
+
+	my $original = $pwd;
+	$pwd =~ s!(^|/)\.!$1_!g;         # don't enter hidden directories
+	$pwd =~ s!^/!!;                  # remove leading /
+	$pwd =~ s![^-_./A-Z0-9~, ]!_!gi; # no illegal characters
+	return if $renameError && $original ne $pwd;
+
+	$pwd = '.' if $pwd eq '';
+	return $pwd;
+}
+
+sub checkName {
+	my $file = shift;
+	$file =~ s!.*[/\\]!!;               # remove directory
+	$file =~ s/[^-_.a-zA-Z0-9 ]/_/g;    # no illegal characters
+	$file =~ s/^\./_/;                  # no initial dot
+	$file = "newfile.txt" unless $file; # no blank names
+	return $file;
+}
+
+sub isSymLink {
+	my $self = shift; my $file = shift;
+	return 0 unless -l $file;
+
+	my $courseRoot = $self->{ce}{courseDirs}{root};
+	$courseRoot = readlink($courseRoot) if -l $courseRoot;
+	my $pwd = $self->{pwd} || $self->r->param('pwd') || HOME;
+	my $link = File::Spec->rel2abs(readlink($file),"$courseRoot/$pwd");
+	#
+	# Remove /./ and dir/../ constructs
+	#
+	$link =~ s!(^|/)(\.(/|$))+!$1!g;
+	while ($link =~ s!((\.[^./]+|\.\.[^/]+|[^./][^/]*)/\.\.(/|$))!!) {};
+
+	#
+	# Link is OK if it is in the course directory
+	#
+	return 0 if substr($link,0,length($courseRoot)) eq $courseRoot;
+
+	#
+	# Look through the list of valid paths to see if this link is OK
+	#
+	my $valid = $self->{ce}{webworkDirs}{valid_symlinks};
+	if (defined $valid && $valid) {
+		foreach my $path (@{$valid}) {
+			return 0 if substr($link,0,length($path)) eq $path;
+		}
+	}
+
+	return 1;
+}
+
 # prints out the submit button input elements that are available for the current problem
 
 sub output_submit_buttons{
@@ -1451,11 +1567,14 @@ sub output_submit_buttons{
 	my %will = %{ $self->{will} };
 	my $urlpath = $r->urlpath;
 	my $problem = $self->{problem};
+	my $problemNumber = $r->urlpath->arg("problemID");
 	my $courseID = $urlpath->arg("courseID");
 	my $user = $r->param('user');
 	my $effectiveUser = $r->param('effectiveUser');
 	my %showMeAnother = %{ $self->{showMeAnother} };
-	
+	my $setID = $r->urlpath->arg("setID");
+	my $newFolderName = "$setID"."_Problem_$problemNumber"."_Student_Uploads";
+
 	if ($will{requestNewSeed}){
 		print WeBWorK::CGI_labeled_input(-type=>"submit", -id=>"submitAnswers_id", -input_attr=>{-name=>"requestNewSeed", -value=>$r->maketext("Request New Version"), -onclick=>"this.form.target='_self'"});
 		return "";
@@ -1465,15 +1584,72 @@ sub output_submit_buttons{
         if ($can{checkAnswers}) {
         	print WeBWorK::CGI_labeled_input(-type=>"submit", -id=>"checkAnswers_id", -input_attr=>{-onclick=>"this.form.target='_self'",-name=>"checkAnswers", -value=>$r->maketext("Check Answers")});
   	}
-        print CGI::start_form(-method=>"POST",-enctype=>'multipart/form-data',-name=>"csform",);
-	print CGI::input({type=>=>"file",name=>"file",id=>"file",size=>40,maxlength=>80});
+
+#javascript to play video in new page, cant get url to work
+	#print CGI::script(<<EOF);
+	#function play(video_html){
+	#var win = window.open("", "Title", "toolbar=no, location=no, directories=no, status=no, menubar=no, scrollbars=yes, resizable=yes, #width=780, height=200, top="+(screen.height-400)+", left="+(screen.width-840));
+	#win.document.body.innerHTML = video_html;
+	#}
+#EOF
+print CGI::script(<<EOF);
+function play(video_html){
+	window.open(video_html);
+}
+EOF
+# button when clicked will download video uploaded by the professor
+	my $vid_filename = 'video';
+	my @file_exts = qw(.mp4 .mov .qt .ogg .wav);
+	my $vid_dir = 'templates/set' . $setID . '/' . $setID . '_Problem_' . $problemNumber . '_Student_Uploads';
+        my $vid_file = $ce->{webworkDirs}{courses} . '/' . $courseID . "/$vid_dir/$vid_filename";$urlpath = $self->r->urlpath;
+	foreach my $file_ext (@file_exts){
+		if (-e ("$vid_file" . "$file_ext")) {
+			my $fileManagerPage = $urlpath->newFromModule("WeBWorK::ContentGenerator::Grades", $r, courseID => $courseID);
+       			my $fileManagerURL  = $self->systemLink($fileManagerPage, params => {download => $vid_filename . $file_ext, pwd => $vid_dir});
+			#my $video_html = ' <video width="320" height="240" controls><source src="' . $fileManagerURL . '" type="video/mp4"><source src="' . $fileManagerURL . '" type="video/ogg">Your browser does not support the video tag.</video>';
+			print CGI::button({onclick => "play('$fileManagerURL')", value => 'Video Hint'});
+		}
+	}
+	#print $r->maketext($ce->{courseDirs}->{templates}.'/'."set$setID".'/'.$newFolderName);
 	print CGI::br();
-	print CGI::submit(-value=>'Upload File',);
+        print CGI::start_form(-method=>"POST",-enctype=>'multipart/form-data',-name=>"csvform",);
+	print CGI::input({type=>"file",name=>"file",id=>"file",size=>40,maxlength=>80});
+	print CGI::br();
+	print CGI::submit(-value=>"Upload File", -id=>"upload_file");
+
+	my $fileIDhash = $self->r->param('file');
+	unless ($fileIDhash) {
+		$self->addbadmessage("You have not chosen a file to upload.");
+		#$self->Refresh;
+		return;
+	}
+	my ($id,$hash) = split(/\s+/,$fileIDhash);			
+	my $dir = $ce->{courseDirs}->{templates}.'/'."set$setID".'/'.$newFolderName;
+	#my $upload = WeBWorK::Upload->retrieve($id,$hash,dir=>$self->{ce}{webworkDirs}{uploadCache});
+	my $upload = WeBWorK::Upload->retrieve($id,$hash,dir=>$self->{ce}{webworkDirs}{uploadCache});
+	my $name = checkName($upload->filename);			#Taint checker.
+	#get file exstension and then set file name to the user's id 
+	my ($ext) = $name =~ /(\.[^.]+)$/;
+    $name = $user . $ext;
+	my $file = "$dir/$name";
+
+	$upload->disposeTo($file);
+
+	if (-e $file) {
+	  $self->addgoodmessage("File '$name' uploaded successfully");
+	  if ($name =~ m/\.(tar|tar\.gz|tgz)$/ && $self->getFlag('unpack')) {
+	    if ($self->unpack($name) && $self->getFlag('autodelete')) {
+	      if (unlink($file)) {$self->addgoodmessage("Archive '$name' deleted")}
+	        else {$self->addbadmessage("Can't delete archive '$name': $!")}
+	    }
+	  }
+	}
+
 	if ($can{getSubmitButton}) {
         	if ($user ne $effectiveUser) {
         		# if acting as a student, make it clear that answer submissions will
         		# apply to the student's records, not the professor's.
-        		print WeBWorK::CGI_labeled_input(-type=>"submit", -id=>"submitAnswers_id", -input_attr=>{-name=>$r->maketext("submitAnswers"), -value=>$r->maketext("Submit Answers for [_1]", $effectiveUser)});
+        		print WeBWorK::CGI_labeled_input(-type=>"submit", -id=>"submitAnswers_id", -input_attr=>{-name=>"submitAnswers", -value=>$r->maketext("Submit Answers for [_1]", $effectiveUser)});
         	} else {
         		#print CGI::submit(-name=>"submitAnswers", -label=>"Submit Answers", -onclick=>"alert('submit button clicked')");
         		print WeBWorK::CGI_labeled_input(-type=>"submit", -id=>"submitAnswers_id", -input_attr=>{-name=>"submitAnswers", -value=>$r->maketext("Submit Answers"), -onclick=>"this.form.target='_self'"});
@@ -1540,13 +1716,13 @@ sub output_score_summary{
 	if ($prEnabled){
 		my $attempts_before_rr = ($rerandomizePeriod) - ($attempts ) % ($rerandomizePeriod);
 		$attempts_before_rr = 0 if ( (defined $will{requestNewSeed}) and $will{requestNewSeed});
-		$prMessage =
+		$prMessage = " ".
 			$r->maketext(
-				" You have [quant,_1,attempt,attempts] left before new version will be requested.",
+				"You have [quant,_1,attempt,attempts] left before new version will be requested.",
 				$attempts_before_rr)
 			if ($attempts_before_rr > 0);
-		$prMessage =
-			$r->maketext(" Request new version now.")
+		$prMessage = " ".
+			$r->maketext("Request new version now.")
 			if ($attempts_before_rr == 0);
 	}
 	$prMessage = "" if ( after($set->due_date) or before($set->open_date) );
@@ -1939,7 +2115,7 @@ sub output_achievement_message{
 	#If achievements enabled, and if we are not in a try it page, check to see if there are new ones.and print them
 	if ($ce->{achievementsEnabled} && $will{recordAnswers} 
 	    && $submitAnswers && $problem->set_id ne 'Undefined_Set') {
-	    my $achievementMessage = WeBWorK::AchievementEvaluator::checkForAchievements($problem, $pg, $db, $ce);
+	    my $achievementMessage = WeBWorK::AchievementEvaluator::checkForAchievements($problem, $pg, $r);
 	    print $achievementMessage;
 	}
 	
@@ -1983,7 +2159,7 @@ sub output_custom_edit_message{
 	# custom message for editor
 	if ($authz->hasPermissions($user, "modify_problem_sets") and defined $editMode) {
 		if ($editMode eq "temporaryFile") {
-			print CGI::p(CGI::div({class=>'temporaryFile'}, $r->maketext("Viewing temporary file: "), $problem->source_file));
+			print CGI::p(CGI::div({class=>'temporaryFile'}, $r->maketext("Viewing temporary file:").' ', $problem->source_file));
 		} elsif ($editMode eq "savedFile") {
 			# taken care of in the initialization phase
 		}
@@ -2143,6 +2319,15 @@ sub output_JS{
 
 	# This is for tagging menus (if allowed)
 	if ($r->authz->hasPermissions($r->param('user'), "modify_tags")) {
+		if (open(TAXONOMY,  $ce->{webworkDirs}{root}.'/htdocs/DATA/tagging-taxonomy.json') ) {
+			my $taxo = '[]';
+			$taxo = join("", <TAXONOMY>);
+			close TAXONOMY;
+			print qq!\n<script>var taxo = $taxo ;</script>!;
+		} else {
+			print qq!\n<script>var taxo = [] ;</script>!;
+			print qq!\n<script>alert('Could not load the OPL taxonomy from the server.');</script>!;
+		}
 		print CGI::start_script({type=>"text/javascript", src=>"$site_url/js/apps/TagWidget/tagwidget.js"}), CGI::end_script();
 	}
 
