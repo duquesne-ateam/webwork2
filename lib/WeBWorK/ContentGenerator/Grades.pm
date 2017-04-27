@@ -35,6 +35,7 @@ use constant HOME => 'templates';
 
 # Check that the user is authorized, and then
 # see if there is a download to perform.
+# added code here for downlaoding video hint if video format cannot be displayed in browser
 sub pre_header_initialize {
 	my $self = shift;
 	my $r = $self->r;
@@ -200,8 +201,6 @@ sub checkName {
 	$file = "newfile.txt" unless $file; # no blank names
 	return $file;
 }
-
-
 
 sub initialize {
 	my ($self) = @_;

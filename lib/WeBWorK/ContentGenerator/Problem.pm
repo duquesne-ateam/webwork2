@@ -1302,7 +1302,7 @@ sub output_editorLink{
 		my $key = $self->r->param("key");
 		my $action_save_as_source_file = "/opt/webwork/courses/".$courseID."/templates/".$problem->source_file;
 	    my $editorURL = "/webwork2_files/duq/frontpageperl.html?courseID=".$courseID."&setID=".$setID."&problemID=".$problemID."&user=".$user."&effectiveUser=".$effectiveUser."&key=".$key."&action.save_as.source_file=".$action_save_as_source_file;
-	    $editorLink4 = CGI::span(CGI::a({href=>$editorURL}), $r->maketext("DuqEdit"));
+	    $editorLink4 = CGI::span(CGI::a({href=>$editorURL}, $r->maketext("DuqEdit")));
 	}
 	    
 	##### translation errors? #####
@@ -1571,6 +1571,7 @@ sub isSymLink {
 	return 1;
 }
 
+
 # prints out the submit button input elements that are available for the current problem
 
 sub output_submit_buttons{
@@ -1588,7 +1589,7 @@ sub output_submit_buttons{
 	my %showMeAnother = %{ $self->{showMeAnother} };
 	my $setID = $r->urlpath->arg("setID");
 	my $newFolderName = "$setID"."_Problem_$problemNumber"."_Student_Uploads";
-
+	
 	if ($will{requestNewSeed}){
 		print WeBWorK::CGI_labeled_input(-type=>"submit", -id=>"submitAnswers_id", -input_attr=>{-name=>"requestNewSeed", -value=>$r->maketext("Request New Version"), -onclick=>"this.form.target='_self'"});
 		return "";
@@ -1597,36 +1598,50 @@ sub output_submit_buttons{
         print WeBWorK::CGI_labeled_input(-type=>"submit", -id=>"previewAnswers_id", -input_attr=>{-onclick=>"this.form.target='_self'",-name=>"previewAnswers", -value=>$r->maketext("Preview My Answers")});
         if ($can{checkAnswers}) {
         	print WeBWorK::CGI_labeled_input(-type=>"submit", -id=>"checkAnswers_id", -input_attr=>{-onclick=>"this.form.target='_self'",-name=>"checkAnswers", -value=>$r->maketext("Check Answers")});
-  	}
+        }
 
-#javascript to play video in new page, cant get url to work
-	#print CGI::script(<<EOF);
-	#function play(video_html){
-	#var win = window.open("", "Title", "toolbar=no, location=no, directories=no, status=no, menubar=no, scrollbars=yes, resizable=yes, #width=780, height=200, top="+(screen.height-400)+", left="+(screen.width-840));
-	#win.document.body.innerHTML = video_html;
-	#}
-#EOF
+    #javascript for displaying video or downloading video
 print CGI::script(<<EOF);
-function play(video_html){
-	window.open(video_html);
+function play(){
+	if (document.getElementById("video-hint").style.display == "none"){
+		document.getElementById("video-hint").style.display = "block";
+	}
+	else{ 
+		document.getElementById("video-hint").style.display = "none";	
+	}
+	
+}
+function download_video(video){
+	window.open(video);
 }
 EOF
-# button when clicked will download video uploaded by the professor
+	# button when clicked will download video uploaded by the professor
 	my $vid_filename = 'video';
-	my @file_exts = qw(.mp4 .mov .qt .ogg .wav);
+	my @file_exts = qw(.mp4 .mov .qt .ogg .wav .webm);
 	my $vid_dir = 'templates/set' . $setID . '/' . $setID . '_Problem_' . $problemNumber . '_Student_Uploads';
         my $vid_file = $ce->{webworkDirs}{courses} . '/' . $courseID . "/$vid_dir/$vid_filename";$urlpath = $self->r->urlpath;
+	#check if file exists, if it does then either play video in browser or download
 	foreach my $file_ext (@file_exts){
 		if (-e ("$vid_file" . "$file_ext")) {
 			my $fileManagerPage = $urlpath->newFromModule("WeBWorK::ContentGenerator::Grades", $r, courseID => $courseID);
        			my $fileManagerURL  = $self->systemLink($fileManagerPage, params => {download => $vid_filename . $file_ext, pwd => $vid_dir});
-			#my $video_html = ' <video width="320" height="240" controls><source src="' . $fileManagerURL . '" type="video/mp4"><source src="' . $fileManagerURL . '" type="video/ogg">Your browser does not support the video tag.</video>';
-			print CGI::button({onclick => "play('$fileManagerURL')", value => 'Video Hint'});
+			my $video_html = ' <video width="320" height="240" controls="true" style="padding-bottom:4em;"><source src="' . $fileManagerURL . '" type="video/mp4"><source src="' . $fileManagerURL . '" type="video/ogg"><source src="' . $fileManagerURL . '" type="video/webm">Your browser does not support the video tag.</video>';
+			#check compatability with html5 video tag
+			if ($file_ext == '.mp4' || $file_ext == '.ogg' || $file_ext == '.webm'){			
+				print CGI::button({onclick => "play()", value => 'Video Hint'});
+				print CGI::div({id=>"video-hint", style=>"display:none;"},
+				CGI::pre($video_html));
+			}
+			else{
+				print CGI::button({onclick => "download_video('$fileManagerURL')", value => 'Video Hint'});
+			}
+			last;
 		}
 	}
-	#print $r->maketext($ce->{courseDirs}->{templates}.'/'."set$setID".'/'.$newFolderName);
+
 	print CGI::br();
-        print CGI::start_form(-method=>"POST",-enctype=>'multipart/form-data',-name=>"csvform",);
+	print CGI::br();
+	print CGI::start_form(-method=>"POST",-enctype=>'multipart/form-data',-name=>"csvform",);
 	print CGI::input({type=>"file",name=>"file",id=>"file",size=>40,maxlength=>80});
 	print CGI::br();
 	print CGI::submit(-value=>"Upload File", -id=>"upload_file");
@@ -1634,7 +1649,6 @@ EOF
 	my $fileIDhash = $self->r->param('file');
 	unless ($fileIDhash) {
 		$self->addbadmessage("You have not chosen a file to upload.");
-		#$self->Refresh;
 		return;
 	}
 	my ($id,$hash) = split(/\s+/,$fileIDhash);			
@@ -1643,7 +1657,7 @@ EOF
 	my $name = checkName($upload->filename);			#Taint checker.
 	#get file exstension and then set file name to the user's id 
 	my ($ext) = $name =~ /(\.[^.]+)$/;
-	$name = $user . $ext;
+    $name = $user . $ext;
 	my $file = "$dir/$name";
 
 	$upload->disposeTo($file);
