@@ -1269,6 +1269,7 @@ sub output_editorLink{
 	my $editorLink = "";
 	my $editorLink2 = "";
 	my $editorLink3 = "";
+	my $editorLink4 = "";
 	# if we are here without a real homework set, carry that through
 	my $forced_field = [];
 	$forced_field = ['sourceFilePath' =>  $r->param("sourceFilePath")] if
@@ -1291,20 +1292,33 @@ sub output_editorLink{
 		my $editorURL = $self->systemLink($editorPage, params=>$forced_field);
 		$editorLink3 = CGI::span(CGI::a({href=>$editorURL,target =>'WW_Editor3'}, $r->maketext("Edit3")));
 	}
+	if ($authz->hasPermissions($user, "modify_problem_sets")) {
+		# Create the link with parameters that will be utilized with the POST request to save state and update the problem
+	    my $setID = $self->r->urlpath->arg("setID");
+		my $problemID = $self->r->urlpath->arg("problemID");
+		my $effectiveUser = $self->r->param("effectiveUser");
+		my $problem = $self->r->db->getMergedProblem($effectiveUser, $setID, $problemID);
+		my $courseID = $self->r->urlpath->arg("courseID");
+		my $key = $self->r->param("key");
+		my $action_save_as_source_file = "/opt/webwork/courses/".$courseID."/templates/".$problem->source_file;
+	    my $editorURL = "/webwork2_files/duq/frontpageperl.html?courseID=".$courseID."&setID=".$setID."&problemID=".$problemID."&user=".$user."&effectiveUser=".$effectiveUser."&key=".$key."&action.save_as.source_file=".$action_save_as_source_file;
+	    $editorLink4 = CGI::span(CGI::a({href=>$editorURL}, $r->maketext("DuqEdit")));
+	}
+	    
 	##### translation errors? #####
 
 	if ($pg->{flags}->{error_flag}) {
 		if ($authz->hasPermissions($user, "view_problem_debugging_info")) {
 			print $self->errorOutput($pg->{errors}, $pg->{body_text});
 
-			print $editorLink, " ", $editorLink2, " ", $editorLink3;
+			print $editorLink, " ", $editorLink2, " ", $editorLink3, " ", $editorLink4;
 		} else {
 			print $self->errorOutput($pg->{errors}, $r->maketext("You do not have permission to view the details of this error."));
 		}
 		print "";
 	}
 	else{
-		print $editorLink, " ", $editorLink2, " ", $editorLink3;
+		print $editorLink, " ", $editorLink2, " ", $editorLink3, " ", $editorLink4;
 	}
 	return "";
 }
@@ -1557,6 +1571,7 @@ sub isSymLink {
 	return 1;
 }
 
+
 # prints out the submit button input elements that are available for the current problem
 
 sub output_submit_buttons{
@@ -1574,7 +1589,7 @@ sub output_submit_buttons{
 	my %showMeAnother = %{ $self->{showMeAnother} };
 	my $setID = $r->urlpath->arg("setID");
 	my $newFolderName = "$setID"."_Problem_$problemNumber"."_Student_Uploads";
-
+	
 	if ($will{requestNewSeed}){
 		print WeBWorK::CGI_labeled_input(-type=>"submit", -id=>"submitAnswers_id", -input_attr=>{-name=>"requestNewSeed", -value=>$r->maketext("Request New Version"), -onclick=>"this.form.target='_self'"});
 		return "";
@@ -1583,36 +1598,50 @@ sub output_submit_buttons{
         print WeBWorK::CGI_labeled_input(-type=>"submit", -id=>"previewAnswers_id", -input_attr=>{-onclick=>"this.form.target='_self'",-name=>"previewAnswers", -value=>$r->maketext("Preview My Answers")});
         if ($can{checkAnswers}) {
         	print WeBWorK::CGI_labeled_input(-type=>"submit", -id=>"checkAnswers_id", -input_attr=>{-onclick=>"this.form.target='_self'",-name=>"checkAnswers", -value=>$r->maketext("Check Answers")});
-  	}
+        }
 
-#javascript to play video in new page, cant get url to work
-	#print CGI::script(<<EOF);
-	#function play(video_html){
-	#var win = window.open("", "Title", "toolbar=no, location=no, directories=no, status=no, menubar=no, scrollbars=yes, resizable=yes, #width=780, height=200, top="+(screen.height-400)+", left="+(screen.width-840));
-	#win.document.body.innerHTML = video_html;
-	#}
-#EOF
+    #javascript for displaying video or downloading video
 print CGI::script(<<EOF);
-function play(video_html){
-	window.open(video_html);
+function play(){
+	if (document.getElementById("video-hint").style.display == "none"){
+		document.getElementById("video-hint").style.display = "block";
+	}
+	else{ 
+		document.getElementById("video-hint").style.display = "none";	
+	}
+	
+}
+function download_video(video){
+	window.open(video);
 }
 EOF
-# button when clicked will download video uploaded by the professor
+	# button when clicked will download video uploaded by the professor
 	my $vid_filename = 'video';
-	my @file_exts = qw(.mp4 .mov .qt .ogg .wav);
+	my @file_exts = qw(.mp4 .mov .qt .ogg .wav .webm);
 	my $vid_dir = 'templates/set' . $setID . '/' . $setID . '_Problem_' . $problemNumber . '_Student_Uploads';
         my $vid_file = $ce->{webworkDirs}{courses} . '/' . $courseID . "/$vid_dir/$vid_filename";$urlpath = $self->r->urlpath;
+	#check if file exists, if it does then either play video in browser or download
 	foreach my $file_ext (@file_exts){
 		if (-e ("$vid_file" . "$file_ext")) {
 			my $fileManagerPage = $urlpath->newFromModule("WeBWorK::ContentGenerator::Grades", $r, courseID => $courseID);
        			my $fileManagerURL  = $self->systemLink($fileManagerPage, params => {download => $vid_filename . $file_ext, pwd => $vid_dir});
-			#my $video_html = ' <video width="320" height="240" controls><source src="' . $fileManagerURL . '" type="video/mp4"><source src="' . $fileManagerURL . '" type="video/ogg">Your browser does not support the video tag.</video>';
-			print CGI::button({onclick => "play('$fileManagerURL')", value => 'Video Hint'});
+			my $video_html = ' <video width="320" height="240" controls="true" style="padding-bottom:4em;"><source src="' . $fileManagerURL . '" type="video/mp4"><source src="' . $fileManagerURL . '" type="video/ogg"><source src="' . $fileManagerURL . '" type="video/webm">Your browser does not support the video tag.</video>';
+			#check compatability with html5 video tag
+			if ($file_ext == '.mp4' || $file_ext == '.ogg' || $file_ext == '.webm'){			
+				print CGI::button({onclick => "play()", value => 'Video Hint'});
+				print CGI::div({id=>"video-hint", style=>"display:none;"},
+				CGI::pre($video_html));
+			}
+			else{
+				print CGI::button({onclick => "download_video('$fileManagerURL')", value => 'Video Hint'});
+			}
+			last;
 		}
 	}
-	#print $r->maketext($ce->{courseDirs}->{templates}.'/'."set$setID".'/'.$newFolderName);
+
 	print CGI::br();
-        print CGI::start_form(-method=>"POST",-enctype=>'multipart/form-data',-name=>"csvform",);
+	print CGI::br();
+	print CGI::start_form(-method=>"POST",-enctype=>'multipart/form-data',-name=>"csvform",);
 	print CGI::input({type=>"file",name=>"file",id=>"file",size=>40,maxlength=>80});
 	print CGI::br();
 	print CGI::submit(-value=>"Upload File", -id=>"upload_file");
@@ -1620,12 +1649,10 @@ EOF
 	my $fileIDhash = $self->r->param('file');
 	unless ($fileIDhash) {
 		$self->addbadmessage("You have not chosen a file to upload.");
-		#$self->Refresh;
 		return;
 	}
 	my ($id,$hash) = split(/\s+/,$fileIDhash);			
 	my $dir = $ce->{courseDirs}->{templates}.'/'."set$setID".'/'.$newFolderName;
-	#my $upload = WeBWorK::Upload->retrieve($id,$hash,dir=>$self->{ce}{webworkDirs}{uploadCache});
 	my $upload = WeBWorK::Upload->retrieve($id,$hash,dir=>$self->{ce}{webworkDirs}{uploadCache});
 	my $name = checkName($upload->filename);			#Taint checker.
 	#get file exstension and then set file name to the user's id 
@@ -1644,8 +1671,7 @@ EOF
 	    }
 	  }
 	}
-
-	if ($can{getSubmitButton}) {
+        if ($can{getSubmitButton}) {
         	if ($user ne $effectiveUser) {
         		# if acting as a student, make it clear that answer submissions will
         		# apply to the student's records, not the professor's.
@@ -1697,6 +1723,7 @@ sub output_score_summary{
 	my $effectiveUser = $r->param('effectiveUser') || $r->param('user');
 	my $scoreRecordedMessage = $self->{scoreRecordedMessage};
 	my $submitAnswers = $self->{submitAnswers};
+	my $noGradeFeedback = $self->{pg}{flags}{noGradeFeedback}; # 4/4/17 Gets current value, from PG code, for flag for hiding % feedback 									   # in problem output summary
 	my %will = %{ $self->{will} };
 
 	my $prEnabled = $ce->{pg}->{options}->{enablePeriodicRandomization} // 0;
@@ -1754,7 +1781,11 @@ sub output_score_summary{
 	unless (defined( $pg->{state}->{state_summary_msg}) and $pg->{state}->{state_summary_msg}=~/\S/) {
 
 		my $notCountedMessage = ($problem->value) ? "" : $r->maketext("(This problem will not count towards your grade.)");
-		print join("",
+		
+		# 4/4/17 If the flag is defined as zero (default or within the problem) or is undefined, output the prior summary after
+		# submitting the problem. Otherwise, if the noGradeFeedback flag is positive, output the abbreviated summary which removes 			# the rows giving out grading information.
+		if((defined ($noGradeFeedback) && ($noGradeFeedback == 0)) || (!defined ($noGradeFeedback))){
+			print join("",
 			$submitAnswers ? $scoreRecordedMessage . CGI::br() : "",
 			$r->maketext("You have attempted this problem [quant,_1,time,times].",$attempts), $prMessage, CGI::br(),
 			$submitAnswers ? $r->maketext("You received a score of [_1] for this attempt.",wwRound(0, $pg->{result}->{score} * 100).'%') . CGI::br():'',
@@ -1763,7 +1794,13 @@ sub output_score_summary{
 		? $r->maketext("Your overall recorded score is [_1].  [_2]",$lastScore,$notCountedMessage) . CGI::br()
 				: "",
 			$setClosed ? $setClosedMessage : $r->maketext("You have [negquant,_1,unlimited attempts,attempt,attempts] remaining.",$attemptsLeft) 
-		);
+		);}
+		elsif($noGradeFeedback > 0){
+		print join("",
+			$submitAnswers ? $scoreRecordedMessage . CGI::br() : "",
+			$r->maketext("You have attempted this problem [quant,_1,time,times].",$attempts), $prMessage, CGI::br(),
+			$setClosed ? $setClosedMessage : $r->maketext("You have [negquant,_1,unlimited attempts,attempt,attempts] remaining.",$attemptsLeft) 
+		);}
 	}else {
 	  print $pg->{state}->{state_summary_msg};
 	}
