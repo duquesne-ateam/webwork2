@@ -31,7 +31,6 @@ use strict;
 use warnings;
 #use CGI qw(-nosticky );
 use WeBWorK::CGI;
-use WeBWorK::CGI;
 use HTML::Entities;
 use URI::Escape;
 use WeBWorK::Utils qw(x surePathToFile has_aux_files not_blank readFile writeLog writeCourseLog encodeAnswers decodeAnswers is_restricted
@@ -134,7 +133,6 @@ add_problem => x("Append"),
 save        => x("Update"),
 save_as     => x("NewVersion"),
 revert      => x("Revert"),
-#upload	    => x("UploadVideo")
 };
 #[qw(view save save_as revert add_problem add_header make_local_copy)];
 
@@ -147,7 +145,6 @@ use constant FORM_PERMS => {
 		save_as => "modify_student_data",
 #		rename  => "modify_student_data",
 		revert => "modify_student_data",
-		#upload => "modify_student_data",
 };
 
 our $BLANKPROBLEM = 'blankProblem.pg';
@@ -480,7 +477,7 @@ sub body {
 	my $inputFilePath   = $self->{inputFilePath};   # path to the file for input, (might be a .tmp file)
 	my $setName         = $self->{setID} ;
 	my $problemNumber   = $self->{problemID} ;
-	$setName            = defined($setName) ? $setName : '';  # we need this instead of using the || construction 
+    $setName            = defined($setName) ? $setName : '';  # we need this instead of using the || construction 
                                                               # to keep set 0 from being set to the 
                                                               # empty string.
 	my $fullSetName = defined( $self->{fullSetID} ) ? $self->{fullSetID} : $setName;
@@ -736,12 +733,13 @@ EOF
 	
 	print  CGI::end_form();
 
+
 	#Uploads a file, saving the extension and naming it "video.(extensionname)"
 	my $setID = $r->urlpath->arg("setID");
 	my $problemNumber = $r->urlpath->arg("problemID");
 	my $newFolderName = "$setID"."_Problem_$problemNumber"."_Student_Uploads";
 	print CGI::br();
-        print CGI::start_form(-method=>"POST",-enctype=>'multipart/form-data',-name=>"csvform",);
+    print CGI::start_form(-method=>"POST",-enctype=>'multipart/form-data',-name=>"csvform",);
 	print CGI::input({type=>"file",name=>"file",id=>"file",size=>40,maxlength=>80});
 	print CGI::br();
 	print CGI::submit(-value=>"Upload File", -id=>"upload_file");
@@ -752,10 +750,11 @@ EOF
 		$self->addbadmessage("You have not chosen a file to upload.");
 		return;
 	}
-	my ($id,$hash) = split(/\s+/,$fileIDhash);
+	my ($id,$hash) = split(/\s+/,$fileIDhash);			
 	my $dir = $ce->{courseDirs}->{templates}.'/'."set$setID".'/'.$newFolderName;
 	my $upload = WeBWorK::Upload->retrieve($id,$hash,dir=>$self->{ce}{webworkDirs}{uploadCache});
-	my $name = checkName($upload->filename);
+	my $name = checkName($upload->filename);			#Taint checker.
+	#get file exstension and then set file name to the user's id 
 	my $ext = $name;
 	$ext =~ s/^(.[^.]+)//;
 	my $file = "$dir/video$ext";
@@ -772,11 +771,13 @@ EOF
 	  }
 	}
 
+
 	print CGI::script("updateTarget()");
 	return "";
 
 
 }
+
 
 #
 #  Convert long paths to [TMPL], etc.
@@ -1973,14 +1974,14 @@ sub save_as_handler {
 	my $relativeOutputFilePath = $self->getRelativeSourceFilePath($outputFilePath);
 	
 	my $viewURL = $self->systemLink($problemPage, 
-						 params=>{
-							 sourceFilePath     => $relativeOutputFilePath, #The path relative to the templates directory is required.
-							 problemSeed        => $problemSeed,
-							 edit_level         => $edit_level,
-							 file_type          => $new_file_type,
-							 status_message     => uri_escape($self->{status_message})
+								 params=>{
+									 sourceFilePath     => $relativeOutputFilePath, #The path relative to the templates directory is required.
+									 problemSeed        => $problemSeed,
+									 edit_level         => $edit_level,
+									 file_type          => $new_file_type,
+									 status_message     => uri_escape($self->{status_message})
 
-							 }
+								 }
 	);
 	
 	$self->reply_with_redirect($viewURL);
@@ -2011,7 +2012,6 @@ sub revert_handler {
 	$self->addgoodmessage("Reverting to original file '".$self->shortPath($editFilePath)."'");
 	# no redirect is needed
 }
-
 sub checkName {
 	my $file = shift;
 	$file =~ s!.*[/\\]!!;               # remove directory
